@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
-### Requirement: Brainstorm reads the thread once and shows it
-When `lets-brainstorm` reads the story packet, it SHALL fetch the issue's thread with the query the reference gives, paging as the reference says, and SHALL show the user the reference's list. It SHALL link `../lets-shape/references/issue-comments.md` rather than restate the query, the labels or the marker. It SHALL fetch the thread once, when it reads the packet.
+### Requirement: Brainstorm reads the thread and shows it
+When `lets-brainstorm` reads the story packet, it SHALL fetch the issue's thread with the query the reference gives, paging as the reference says. It SHALL show the user the reference's list. It SHALL link `../lets-shape/references/issue-comments.md` rather than restate the query, the labels or the marker.
 
 #### Scenario: The skill links the reference
 - **WHEN** the skill-interfaces test reads `skills/lets-brainstorm/SKILL.md`
@@ -14,6 +14,17 @@ When `lets-brainstorm` reads the story packet, it SHALL fetch the issue's thread
 #### Scenario: An issue with no comments
 - **WHEN** the brainstorm starts on an issue with no comments
 - **THEN** the brainstorm asks nothing about comments and the ledger cites no comment
+
+### Requirement: Brainstorm fetches the thread again before the user confirms the ledger
+Before it asks the user to confirm the ledger, `lets-brainstorm` SHALL fetch the thread again, whether or not the first fetch found a comment. A comment the first fetch did not return, or whose last edit date changed, SHALL be shown and raised like the others.
+
+#### Scenario: A comment arrives during the brainstorm
+- **WHEN** a collaborator comments on the story after the first fetch and before the ledger is confirmed
+- **THEN** the brainstorm shows that comment and, when it bears on the story, asks about it before the user confirms
+
+#### Scenario: A thread that was empty
+- **WHEN** the first fetch found no comment, and a comment arrives during the brainstorm
+- **THEN** the second fetch returns it, and the brainstorm shows it
 
 ### Requirement: Brainstorm raises an unread comment that bears on the story as a question
 `lets-brainstorm` SHALL raise each comment not labelled `read` that bears on the story's scope, behavior or acceptance as a question to the user, with a recommended answer and its reason, like any other question. It SHALL ask no question about a comment labelled `read`, and none about a comment that bears on nothing in the story.
@@ -31,7 +42,7 @@ When `lets-brainstorm` reads the story packet, it SHALL fetch the issue's thread
 - **THEN** the brainstorm asks nothing about it and writes no row for it
 
 ### Requirement: A comment is cited only on the user's yes
-A ledger row SHALL carry the source `Evidence: #<n> comment (<author>, <date>)` only when the user said yes to that comment for that question in this brainstorm. `<n>` SHALL be the issue number, `<author>` the author as the reference's list shows it, without `@` and `ghost` for a deleted account, and `<date>` the comment's creation date as `YYYY-MM-DD`. When the user agrees with a comment but gives a different answer, the source SHALL be `User`. When the user has not said yes, the comment's content SHALL appear in no row, under any source, and the brainstorm SHALL settle the question from the packet and the code alone. A brainstorm the user delegated SHALL still put a comment question to the user.
+A ledger row SHALL carry the source `Evidence: #<n> comment (<author>, <date>)` only when the user said yes to that comment for that question in this brainstorm. `<n>` SHALL be the issue number. `<author>` SHALL be the author as the reference's list shows it: without `@`, and `ghost` for a deleted account. `<date>` SHALL be the comment's creation date as `YYYY-MM-DD`. When the user agrees with a comment but gives a different answer, the source SHALL be `User`. When the user has not said yes, the comment's content SHALL appear in no row, under any source. The brainstorm SHALL then settle the question from the packet and the code alone. A brainstorm the user delegated SHALL still put a comment question to the user, whatever the comment's label.
 
 #### Scenario: The user confirms a comment
 - **WHEN** the user says yes to a comment from `andrewduckett` posted on 2026-10-24 on issue #87
@@ -42,7 +53,7 @@ A ledger row SHALL carry the source `Evidence: #<n> comment (<author>, <date>)` 
 - **THEN** the row's source is `User`
 
 #### Scenario: A delegated brainstorm meets a comment
-- **WHEN** the user delegated the brainstorm, and a `candidate` comment bears on scope
+- **WHEN** the user delegated the brainstorm, and an unread comment bears on scope, whether labelled `candidate` or `outside`
 - **THEN** the brainstorm stops and asks the user about that comment, and does not record the comment's answer as `Assumption`
 
 #### Scenario: The skill states the source form

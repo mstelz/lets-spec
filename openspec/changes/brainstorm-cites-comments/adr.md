@@ -5,7 +5,7 @@
 
 ## Review Summary
 
-ADR review completed for this change. None of design.md's six decisions qualifies. Each is a sentence or a section in prose, costs nothing to reverse, and a reader of the skill and the spec sees the rule and its reason. The why that is costly to lose, that a comment reaches a plan only through a human and that a candidate's reply is the read marker, is already in ADR-012 and ADR-013. This change applies the first and leaves the second alone.
+ADR review completed for this change. None of design.md's six decisions qualifies. Each is a sentence or a section in prose, and costs nothing to reverse. A reader of the skill and the spec sees the rule and its reason. The why that is costly to lose is already in ADR-012 and ADR-013: a comment reaches a plan only through a human, and a candidate's reply is the read marker. This change applies the first and leaves the second alone.
 
 ## In-Force ADRs Reviewed
 

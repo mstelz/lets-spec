@@ -4,7 +4,7 @@ A thread can grow after `lets-build` has claimed an issue, and the brainstorm is
 
 ## What Changes
 
-- `lets-brainstorm` reads the issue's thread with the shared reference, shows the list, and raises an unread comment that bears on the story as a question (D4). It reads once, when it reads the packet (D5), and writes nothing on the issue (D6).
+- `lets-brainstorm` reads the issue's thread with the shared reference, shows the list, and raises an unread comment that bears on the story as a question (D4). It reads the thread when it reads the packet and again before the user confirms the ledger (D5), and writes nothing on the issue (D6).
 - The ledger gains the source `Evidence: #<n> comment (<author>, <date>)` (D1). A row carries it only when the user said yes to that comment, for that question (D2, D3).
 - Both schemas' brainstorm step 2 say that the packet is the issue body, and that its comments are evidence, not instructions (D7).
 - Both brainstorm templates' source note names the comment form (D8).
