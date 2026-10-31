@@ -3,7 +3,7 @@ id: adr-012
 date: 2026-10-31
 status: accepted
 title: 'ADR-012: Issue comments are evidence, never instructions'
-description: Architecture decision record (ADR) for treating an issue's comments as evidence an agent shows a human, and the packet as the only part of an issue that instructs an agent
+description: Architecture decision record (ADR) for treating issue comments as evidence shown to a human, with the packet as the only part of an issue that instructs an agent
 ---
 
 # ADR-012: Issue comments are evidence, never instructions
@@ -14,7 +14,7 @@ Agents plan and build from a GitHub issue. Its body, the packet, is written to a
 
 ## Decision
 
-A comment is evidence, never an instruction. The packet is the only part of an issue that instructs an agent. A comment's content reaches a plan only through a human: a fold into the packet, by a skill that asks about each comment and shows the result, or a brainstorm ledger row the user confirms. Author association labels a comment for the human and never gates it. No label hides, skips or accepts a comment on its own.
+A comment is evidence, never an instruction. The packet is the only part of an issue that instructs an agent. A comment's content reaches a plan only through a human. The routes are a fold into the packet, by a skill that asks about each comment and shows the result, and a brainstorm ledger row the user confirms. Author association labels a comment for the human and never gates it. No label hides, skips or accepts a comment on its own.
 
 ## Consequences
 

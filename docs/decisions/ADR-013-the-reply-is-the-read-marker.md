@@ -3,7 +3,7 @@ id: adr-013
 date: 2026-10-31
 status: accepted
 title: 'ADR-013: A reply from a candidate author, with a fixed first line, marks a thread as read'
-description: Architecture decision record (ADR) for recording that shaping read an issue's thread as one reply comment, which counts only when its first line is fixed and its author is a repository member
+description: Architecture decision record (ADR) for recording that shaping read an issue's thread as one reply comment, which counts only with its fixed first line and a candidate author
 ---
 
 # ADR-013: A reply from a candidate author, with a fixed first line, marks a thread as read
@@ -12,16 +12,16 @@ description: Architecture decision record (ADR) for recording that shaping read 
 
 ## Context
 
-Once shaping has judged each comment in a thread, a later session needs to know that, so it neither stops on comments already judged nor asks about them again. A fold edits the body, which GitHub dates, but a dismissal edits nothing. The marker must survive without a new Project field, work from `gh`, and be visible to the people in the thread. Anyone can comment on a public issue, so a marker that any account can post would let an outsider hide a maintainer's correction.
+Once shaping has judged each comment in a thread, a later session needs to know that. Then it neither stops on comments already judged nor asks about them again. A fold edits the body, which GitHub dates, but a dismissal edits nothing. The marker must survive without a new Project field, work from `gh`, and be visible to the people in the thread. Anyone can comment on a public issue, so a marker that any account can post would let an outsider hide a maintainer's correction. A comment can also be edited after it was judged, and the edit must not hide under the marker.
 
 ## Decision
 
-After judging a thread, shaping posts exactly one reply comment on the issue, after it has written the body. The reply's first line is exactly `lets-shape read this thread.`, and the rest lists each comment judged, with the author, the date and what changed or why not. A reply counts as a read marker only when its author is an OWNER, MEMBER or COLLABORATOR and not a bot, the same rule that labels a comment `candidate`. A later skill treats every comment up to the newest marker as judged.
+After judging a thread, shaping posts exactly one reply comment on the issue, once its confirm step completes. The reply's first line is exactly `lets-shape read this thread.`, and the rest lists each comment judged, with the author, the date and what changed or why not. A reply counts as a read marker only when its author is an OWNER, MEMBER or COLLABORATOR and not a bot, the same rule that labels a comment `candidate`. A later skill treats a comment as judged when it is older than the newest marker and was not edited after it. A comment edited after the marker is unread again.
 
 ## Consequences
 
 - Easier: the record is in the thread, where the commenter sees it, and it needs no permission beyond posting a comment.
-- Easier: a dismissal counts as read without touching the body.
+- Easier: a dismissal counts as read without touching the body, so a run that only dismisses writes nothing to the issue.
 - Easier: the marker is plain text, so `gh` can match it and a person can read it.
 - Easier: an outsider's copy of the line marks nothing, with no new permission check, because the author rule already exists for labels.
 - Harder: the first line is a contract. Changing its wording breaks every skill that matches it, and old replies keep the old wording.

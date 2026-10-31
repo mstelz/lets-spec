@@ -5,7 +5,7 @@
 
 ## Review Summary
 
-ADR review completed for this change. Design decisions 1, 2 and 5 to 10 are recoverable from the skill text and get no record. Decisions 3 and 4 pass the test: an engineer reading only the skill could reverse them, and reversing them would open the trust boundary or strand the skills that match the reply.
+ADR review completed for this change. Design decisions 1, 2 and 5 to 10 are recoverable from the skill text and get no record. Decisions 3 and 4 pass the test. An engineer reading only the skill could reverse them, and reversing them would open the trust boundary or strand the skills that match the reply.
 
 ## In-Force ADRs Reviewed
 
