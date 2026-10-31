@@ -186,8 +186,11 @@ Take in the input — a file path, an issue (`gh issue view <n>`), pasted text, 
 - Restate the scope in your own words; have the user confirm
 - Surface goals and non-goals
 - List open questions as they emerge (they land in the parent issue)
+- When the input is an issue, read its thread as [Issue comments](references/issue-comments.md) says, and show the user the list. Ask about each comment not labelled `read`, in list order, one at a time. Recommend taking it into the parent issue or dismissing it, with the reason. A point the user takes in goes into the parent's Scope or Open questions.
 
 **Checkpoint:** The parent issue is public, so confirm its text first. Write it from the parent template in [templates/issue-template.md](templates/issue-template.md): the status line, the input reference, the confirmed scope and any open questions so far. Title it `Epic: <capability>`, create it with `gh issue create --title "Epic: <capability>" --body-file <file> --project "<project title>"`, then set its Kind to `Epic` with `item-edit`. Phase 5 may turn it into a single story.
+
+When the input is an issue, fetch its thread again, even when the first fetch found nothing to ask about. Ask about each comment that is new or edited since the last fetch. When a point goes into the parent, confirm the updated body and write it with `gh issue edit <parent> --body-file <file>`. Repeat until a fetch finds nothing new. Then, when the run judged at least one comment, post one reply on the input issue, as the reference says. It lists each point taken in as `Taken into #<parent>:`.
 
 ### Phase 2: Personas
 

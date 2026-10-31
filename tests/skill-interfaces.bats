@@ -259,6 +259,11 @@ assert_reference_links() {
     { echo "issue-comments.md does not post with gh issue comment --body-file"; false; }
 }
 
+@test "Ingest takes an accepted comment into the parent, as the issue-comments reference says" {
+  skill_says lets-shape "Recommend taking it into the parent issue or dismissing it"
+  skill_says lets-shape "gh issue edit <parent> --body-file <file>"
+}
+
 load support/release
 
 @test "planning vocabulary inputs resolve inside each published flow" {
