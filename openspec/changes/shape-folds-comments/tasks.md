@@ -9,7 +9,7 @@
 - [x] 2.1 [medium] Shape one issue step 1 reads a confirmed title-search match like a named issue, reads the thread through the reference, and shows the list; a new step between 3 and 4 asks about each unread comment for every Kind, with fold or dismiss recommended (verify: bats tests/skill-interfaces.bats --filter "reference") (✓ bats --filter "reference" passed, 4 of 4)
 - [x] 2.2 [medium] Shape one issue step 6 folds ride the one body write, an unchanged packet writes nothing and leaves the Project fields, the thread is fetched again after the confirm step until nothing is new, and one reply follows with `gh issue comment <i> --body-file <file>` (verify: bats tests/skill-interfaces.bats --filter "gh command") (✓ bats --filter "gh command" passed, 2 of 2)
 - [x] 2.3 [medium] Phase 1 Ingest reads the input issue's thread, asks take-into-parent or dismiss, writes accepted points into the parent's Scope or Open questions, fetches again after the parent is created, and replies on the input issue naming the parent (verify: bats tests/skill-interfaces.bats --filter "reference") (✓ bats --filter "reference" passed, 5 of 5)
-- [ ] 2.4 [easy] [parallel] The README's `lets-shape` section says shaping reads an issue's comments as evidence, folds the ones you accept into the packet, and replies with what it folded and dismissed (verify: grep -qF "folds" README.md)
+- [x] 2.4 [easy] [parallel] The README's `lets-shape` section says shaping reads an issue's comments as evidence, folds the ones you accept into the packet, and replies with what it folded and dismissed (verify: grep -qF "folds" README.md) (✓ grep -qF "folds" README.md passed)
 
 ## 3. Integration [depends-on: 2]
 
