@@ -162,6 +162,8 @@ The backlog is the GitHub Project linked to your repository. Every piece
 of work is an issue on it, with its Kind, Priority, Size and Status as
 Project fields. An issue's **packet** is its body, filled in from its
 Kind's template: `lets-shape` writes it, and `lets-build` checks it.
+`lets-build` also stops on comments shaping has not read, and sends
+them to `lets-shape`.
 
 | You want to | Run |
 |---|---|
@@ -198,7 +200,7 @@ in, and what it dismissed.
 
 | You are on | It does |
 |---|---|
-| The default branch, such as `main` | Finds the next issue, or the one you name, and checks its packet. Assigns it to you, sets it In Progress, creates a branch and an OpenSpec change named after it, and plans it. It stops when the plan is ready. |
+| The default branch, such as `main` | Finds the next issue, or the one you name, and checks its packet. Stops on comments shaping has not read, and sends them to `lets-shape`. Otherwise assigns it to you, sets it In Progress, creates a branch and an OpenSpec change named after it, and plans it. It stops when the plan is ready. |
 | A change's branch, plan unfinished | Carries on planning. |
 | A change's branch, plan finished | Builds the tasks. In `standard`, it then has the code reviewed. It verifies and archives the change, and marks the pull request ready for review. |
 | A branch whose change is archived | Tells you the pull request is ready for review. |
