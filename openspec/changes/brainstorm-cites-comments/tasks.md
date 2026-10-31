@@ -11,6 +11,6 @@
 
 ## 3. Integration [depends-on: 2]
 
-- [ ] 3.1 [easy] The whole suite and the flake pass, including the published-flow link test with the new link in `lets-brainstorm` (verify: pnpm test && nix flake check)
+- [x] 3.1 [easy] The whole suite and the flake pass, including the published-flow link test with the new link in `lets-brainstorm` (verify: pnpm test && nix flake check) (✓ pnpm test: 380 Node tests and 129 bats tests passed; nix flake check: all checks passed)
 
 ## Deviations Ledger
