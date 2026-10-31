@@ -51,8 +51,8 @@ A read marker is a comment whose first line is exactly
 same line from any other author is an ordinary `outside` comment, and
 marks nothing.
 
-The newest marker covers every earlier marker. It also covers every
-earlier comment whose `lastEditedAt` is null or not after the marker's
+The newest marker covers itself and every earlier marker. It also covers
+every earlier comment whose `lastEditedAt` is null or not after the marker's
 `createdAt`. A comment edited after the marker is unread again. Never
 ask about a marker.
 
