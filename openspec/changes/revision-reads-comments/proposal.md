@@ -7,8 +7,8 @@ Revision mode is the one place that reads the whole backlog at once, and it read
 - Revision mode step 1 reads the thread of each open story the map links, one issue at a time, after the stale-link check and before the stages are re-annotated (D1, D2, D3).
 - It shows each thread as the reference's list and asks about every comment not labelled `read`, with the same fold-or-dismiss choice as Shape one issue (D4, D5).
 - A yes that changes the packet is a fold. Revision mode confirms the folded body and writes it with `gh issue edit`, body only, and leaves the Project fields alone (D6).
-- A yes that changes a stage changes the map in the re-annotation, with the three outcomes the stale-link check already has (D7).
-- After each issue's confirm step, revision mode fetches the thread again until nothing is new, then posts one reply (D9, D10).
+- A yes that changes a stage edits the map at once, before the reply, with the three outcomes the stale-link check already has (D7).
+- On an issue where it asked at least one question, revision mode fetches the thread again after the confirm step until nothing is new, then posts one reply (D9, D10).
 - The reference gains one reply item, `Map updated:`, for a comment that changed the map and not the body (D8).
 - The README's `lets-shape` section says a revision run reads these comments too (D15).
 

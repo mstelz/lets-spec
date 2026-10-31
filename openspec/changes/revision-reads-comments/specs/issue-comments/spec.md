@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Revision mode reads the thread of each open story the map links
-In Revision mode step 1, after the stale-link check and before it re-annotates the stages, `lets-shape` SHALL read the thread of each open issue the map links. It SHALL take the issues from the map's `issues/<n>` links, keep the ones the issue list reports as open, and handle them one at a time in ascending number. For each issue it SHALL fetch the thread as the reference says, show the reference's list, ask about each comment not labelled `read`, write any fold, fetch again until nothing is new, and then reply. It SHALL not read closed issues, or open issues the map does not link.
+In Revision mode step 1, after the stale-link check and before it re-annotates the stages, `lets-shape` SHALL read the thread of each open issue the map links. It SHALL take the issues from the map's `issues/<n>` links, keep the ones the issue list reports as open, and handle them one at a time in ascending number. For each issue it SHALL fetch the thread as the reference says and show the reference's list. It SHALL ask about each comment not labelled `read`. It SHALL write the fold and the map change the answers call for. When it asked at least one question on the issue, it SHALL fetch again until nothing is new, and then reply. It SHALL not read closed issues, or open issues the map does not link.
 
 #### Scenario: Two open stories and a closed one
 - **WHEN** the map links #87 and #102, which are open, and #26, which is closed
@@ -61,10 +61,10 @@ In Shape one issue and Revision mode, a yes SHALL fold the comment by rewriting 
 
 #### Scenario: A yes that changes only a stage
 - **WHEN** the user says yes to a comment that changes a journey stage and not the packet
-- **THEN** shaping does not edit the story's body, and the stage changes in the re-annotation that follows
+- **THEN** shaping does not edit the story's body, and `discovery.md` holds the stage change before shaping posts the reply
 
 ### Requirement: Shaping fetches the thread again after the confirm step
-`lets-shape` SHALL fetch the thread again after the confirm step in Shape one issue, after the parent issue's creation in Ingest, or after each issue's confirm step in Revision mode. It SHALL do so whether or not the earlier fetch found an unread comment. A comment the earlier fetch did not return, or whose last edit date changed, SHALL be shown and asked about like the others. In Shape one issue and Revision mode, shaping SHALL then confirm the updated body with the user and write it with `gh issue edit <i> --body-file <file>`. In Ingest, shaping SHALL confirm the updated parent body and write it with `gh issue edit <parent> --body-file <file>`. Shaping SHALL repeat the fetch until it returns nothing new.
+`lets-shape` SHALL fetch the thread again after the confirm step in Shape one issue, and after the parent issue's creation in Ingest, whether or not the earlier fetch found an unread comment. In Revision mode it SHALL fetch again after an issue's confirm step only when it asked at least one question on that issue. A comment the earlier fetch did not return, or whose last edit date changed, SHALL be shown and asked about like the others. In Shape one issue and Revision mode, when a yes changes the body, shaping SHALL confirm the updated body with the user and write it with `gh issue edit <i> --body-file <file>`. A dismissed comment, or one that changes only the map, SHALL write no body. In Ingest, when a point goes into the parent, shaping SHALL confirm the updated parent body and write it with `gh issue edit <parent> --body-file <file>`. Shaping SHALL repeat the fetch until it returns nothing new.
 
 #### Scenario: A comment arrives during the interview
 - **WHEN** a collaborator comments after shaping's first fetch and before the confirm step
@@ -77,6 +77,14 @@ In Shape one issue and Revision mode, a yes SHALL fold the comment by rewriting 
 #### Scenario: A comment arrives while Revision mode judges a story
 - **WHEN** a collaborator comments on a linked story after its first fetch and before its reply
 - **THEN** shaping shows that comment, asks about it, and lists it in that story's reply
+
+#### Scenario: A story with nothing to ask in Revision mode
+- **WHEN** a linked story's comments are all labelled `read`
+- **THEN** shaping fetches its thread once, asks nothing, and posts no reply
+
+#### Scenario: A second-fetch comment the user dismisses
+- **WHEN** the second fetch in Revision mode returns one new comment and the user dismisses it
+- **THEN** shaping writes no body, and the reply lists it as `Dismissed:`
 
 ### Requirement: One reply records the fold
 When the run judged at least one unread comment on an issue, `lets-shape` SHALL post exactly one comment on that issue after its confirm step completes. It SHALL post it with `gh issue comment <i> --body-file <file>`. The confirm step completes when shaping writes the body or the parent issue, or when the user confirms that an existing packet stands unchanged. In Revision mode it completes when shaping writes the folded body, or when the user has answered the last question on that issue and nothing was folded. When the packet stands unchanged, shaping SHALL write no body and SHALL leave the Project fields as they are. The reply's first line SHALL be exactly `lets-shape read this thread.` It SHALL then list every comment judged this run. Each line SHALL start `Folded:` with what changed, `Taken into #<parent>:` with where it went, `Map updated:` with the stage and what changed, or `Dismissed:` with why. A comment that changed the body SHALL get `Folded:`, and that line SHALL also name any map change the same comment made. `Map updated:` SHALL be used only when the comment changed the map and not the body. Each line SHALL name the comment's author without `@`, and its date. A pass that stops before the confirm step completes SHALL post no reply.
@@ -95,7 +103,7 @@ When the run judged at least one unread comment on an issue, `lets-shape` SHALL 
 
 #### Scenario: A map change in Revision mode
 - **WHEN** the user says yes to a comment that moved a stage's link to #140, and the story's body is unchanged
-- **THEN** that story's reply holds one `Map updated:` line naming the stage and #140
+- **THEN** `discovery.md` links #140 at that stage before the reply is posted, and that story's reply holds one `Map updated:` line naming the stage and #140
 
 #### Scenario: One reply per story in Revision mode
 - **WHEN** Revision mode judged comments on #87 and on #102
