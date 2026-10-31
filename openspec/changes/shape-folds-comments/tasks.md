@@ -1,6 +1,6 @@
 ## 1. The test seam and the reference
 
-- [ ] 1.1 [easy] The skill-interfaces test scans `skills/*/references/*.md` as prose, and a new test fails because `skills/lets-shape/SKILL.md` has no link to `references/issue-comments.md` (verify: bats tests/skill-interfaces.bats --filter "issue-comments")
+- [x] 1.1 [easy] The skill-interfaces test scans `skills/*/references/*.md` as prose, and a new test fails because `skills/lets-shape/SKILL.md` has no link to `references/issue-comments.md` (verify: bats tests/skill-interfaces.bats --filter "issue-comments") (✓ the new test fails on the missing link; the other 24 pass with references scanned)
 - [ ] 1.2 [easy] A new test fails because `skills/lets-shape/references/issue-comments.md` does not hold `lets-shape read this thread.`, the labels `candidate`, `outside` and `read`, `gh api graphql` and `gh issue comment` with `--body-file` (verify: bats tests/skill-interfaces.bats --filter "issue-comments")
 - [ ] 1.3 [medium] `references/issue-comments.md` exists and makes 1.2 pass: the rule that comments are evidence, the `gh api graphql` thread query with `pageInfo` and comment and issue `lastEditedAt`, the three labels and `ghost`, the list format without `@`, the read marker and what it covers, and the reply's shape (verify: bats tests/skill-interfaces.bats --filter "issue-comments")
 

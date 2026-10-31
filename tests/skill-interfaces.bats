@@ -6,8 +6,8 @@ load support/common
 
 # The text agents read.
 prose() {
-  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/schemas/*/schema.yaml \
-    "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
+  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/skills/*/references/*.md \
+    "$repo"/schemas/*/schema.yaml "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
 }
 
 # mentions <pattern>: each distinct match of the extended regex in the prose.
@@ -236,6 +236,11 @@ assert_reference_links() {
 
 @test "shaping loads its installed domain-language reference" {
   assert_reference_links "$repo/skills/lets-shape/SKILL.md" "$repo/skills"
+}
+
+# An anchored link would slip past assert_reference_links, so the link has none.
+@test "shaping links its issue-comments reference" {
+  grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
 }
 
 load support/release
