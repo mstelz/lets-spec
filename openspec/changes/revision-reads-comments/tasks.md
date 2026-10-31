@@ -10,6 +10,6 @@
 
 ## 3. Integration [depends-on: 2]
 
-- [ ] 3.1 [easy] The whole suite and the flake pass, including the `gh` command test on the new bullet and the published-flow link test (verify: pnpm test && nix flake check)
+- [x] 3.1 [easy] The whole suite and the flake pass, including the `gh` command test on the new bullet and the published-flow link test (verify: pnpm test && nix flake check) (✓ pnpm test passed: 380 Node tests, 130 bats tests; nix flake check passed)
 
 ## Deviations Ledger
