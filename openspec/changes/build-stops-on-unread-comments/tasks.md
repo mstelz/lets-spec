@@ -5,7 +5,7 @@
 
 ## 2. The skill and the README [depends-on: 1]
 
-- [ ] 2.1 [medium] Confirm the packet gains one paragraph after the required-lines check, as design decision 1 says: fetch the thread as the linked reference says, the watermark sentence, a comment created or edited after it stops the run, and the stop's shape from the spec's last requirement; 1.1 and 1.2 pass (verify: bats tests/skill-interfaces.bats)
+- [x] 2.1 [medium] Confirm the packet gains one paragraph after the required-lines check, as design decision 1 says: fetch the thread as the linked reference says, the watermark sentence, a comment created or edited after it stops the run, and the stop's shape from the spec's last requirement; 1.1 and 1.2 pass (verify: bats tests/skill-interfaces.bats) (✓ bats tests/skill-interfaces.bats passed, 31 of 31)
 - [ ] 2.2 [easy] [parallel] The README's packet sentence and the `lets-build` table's first row say that `lets-build` stops on comments shaping has not read, and sends them to `lets-shape` (verify: grep -qF "has not read" README.md)
 
 ## 3. Integration [depends-on: 2]
