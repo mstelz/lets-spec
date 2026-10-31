@@ -283,11 +283,15 @@ assert_reference_links() {
 @test "the issue-comments reference holds its fixed strings" {
   local text fixed
   text="$(tr -s '[:space:]' ' ' <"$repo/skills/lets-shape/references/issue-comments.md")"
-  for fixed in 'lets-shape read this thread.' '`candidate`' '`outside`' '`read`' 'gh api graphql'; do
+  for fixed in 'lets-shape read this thread.' '`candidate`' '`outside`' '`read`' 'gh api graphql' 'Map updated:'; do
     grep -qF -- "$fixed" <<<"$text" || { echo "issue-comments.md does not say: $fixed"; false; }
   done
   grep -qE 'gh issue comment [^`]*--body-file' <<<"$text" ||
     { echo "issue-comments.md does not post with gh issue comment --body-file"; false; }
+}
+
+@test "Revision mode reads the thread of each open story the map links" {
+  skill_says lets-shape "Read the thread of each open issue the map links"
 }
 
 @test "Ingest takes an accepted comment into the parent, as the issue-comments reference says" {

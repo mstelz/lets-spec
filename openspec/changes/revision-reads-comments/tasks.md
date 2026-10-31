@@ -1,6 +1,6 @@
 ## 1. The test seam
 
-- [ ] 1.1 [easy] A new `skill_says` test fails because `skills/lets-shape/SKILL.md` does not say `Read the thread of each open issue the map links`, and the reference's fixed-strings test fails once `Map updated:` joins its list (verify: bats tests/skill-interfaces.bats --filter "map links|fixed strings")
+- [x] 1.1 [easy] A new `skill_says` test fails because `skills/lets-shape/SKILL.md` does not say `Read the thread of each open issue the map links`, and the reference's fixed-strings test fails once `Map updated:` joins its list (verify: bats tests/skill-interfaces.bats --filter "map links|fixed strings") (✓ both tests failed for the right reason: the skill and the reference do not say the strings yet)
 
 ## 2. The reference, the skill and the README [depends-on: 1]
 
