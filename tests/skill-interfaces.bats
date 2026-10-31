@@ -251,6 +251,14 @@ assert_reference_links() {
   grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-build/SKILL.md"
 }
 
+@test "brainstorm links the issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-brainstorm/SKILL.md"
+}
+
+@test "brainstorm states the comment source form" {
+  skill_says lets-brainstorm 'Evidence: #<n> comment (<author>, <date>)'
+}
+
 @test "build links resolve inside the source skills" {
   assert_reference_links "$repo/skills/lets-build/SKILL.md" "$repo/skills"
 }
