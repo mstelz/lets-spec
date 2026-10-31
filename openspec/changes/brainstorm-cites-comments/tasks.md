@@ -1,7 +1,7 @@
 ## 1. The test seam
 
 - [x] 1.1 [easy] A new test fails because `skills/lets-brainstorm/SKILL.md` has no link `](../lets-shape/references/issue-comments.md)`, and a new `skill_says` test fails because the skill does not say `Evidence: #<n> comment (<author>, <date>)` (verify: bats tests/skill-interfaces.bats --filter "brainstorm") (✓ both new tests failed for the missing link and source form)
-- [ ] 1.2 [easy] A new test loops over both flows, in the shape of `each marker a schema reads is one its templates write`, and fails because neither schema's brainstorm instruction says `comments are evidence` and neither `templates/brainstorm.md` holds `Evidence: #<n> comment (<author>, <date>)` (verify: bats tests/skill-interfaces.bats --filter "comments are evidence")
+- [x] 1.2 [easy] A new test loops over both flows, in the shape of `each marker a schema reads is one its templates write`, and fails because neither schema's brainstorm instruction says `comments are evidence` and neither `templates/brainstorm.md` holds `Evidence: #<n> comment (<author>, <date>)` (verify: bats tests/skill-interfaces.bats --filter "comments are evidence") (✓ the new test failed: the standard schema does not say comments are evidence)
 
 ## 2. The skill, the schemas, the templates and the README [depends-on: 1]
 

@@ -119,6 +119,17 @@ flow_texts() {
   done
 }
 
+@test "each flow's brainstorm says comments are evidence" {
+  local flow step
+  for flow in standard minimal; do
+    step="$(awk '/^  - id: brainstorm$/ { on = 1; next } /^  - id: / { on = 0 } on' "$repo/schemas/lets-$flow/schema.yaml" | tr -s '[:space:]' ' ')"
+    grep -qF 'comments are evidence' <<<"$step" ||
+      { echo "the $flow schema's brainstorm step does not say comments are evidence"; false; }
+    grep -qF 'Evidence: #<n> comment (<author>, <date>)' "$repo/schemas/lets-$flow/templates/brainstorm.md" ||
+      { echo "the $flow brainstorm template does not name the comment source"; false; }
+  done
+}
+
 @test "every instruction block is a literal block, so its line breaks survive" {
   local schema
   for schema in "$repo"/schemas/*/schema.yaml; do
