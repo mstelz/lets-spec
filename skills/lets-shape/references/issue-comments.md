@@ -83,5 +83,11 @@ lets-shape read this thread.
 - Dismissed: ghost, 2026-10-25. Outside this story's scope.
 ```
 
-Each item starts `Folded:` with what changed, `Taken into #<parent>:`
-with where it went, or `Dismissed:` with why.
+Each item starts with one of these:
+
+- `Folded:` and what changed in the body. If the comment changed the
+  map too, say so here.
+- `Taken into #<parent>:` and where it went.
+- `Map updated:` and the stage and what changed. Use it only when the
+  comment changed the map and not the body.
+- `Dismissed:` and why.
