@@ -243,6 +243,18 @@ assert_reference_links() {
   grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
 }
 
+# prose() deduplicates matches, and SKILL.md already names gh api graphql, so
+# this reads the reference itself.
+@test "the issue-comments reference holds its fixed strings" {
+  local text fixed
+  text="$(tr -s '[:space:]' ' ' <"$repo/skills/lets-shape/references/issue-comments.md")"
+  for fixed in 'lets-shape read this thread.' '`candidate`' '`outside`' '`read`' 'gh api graphql'; do
+    grep -qF -- "$fixed" <<<"$text" || { echo "issue-comments.md does not say: $fixed"; false; }
+  done
+  grep -qE 'gh issue comment [^`]*--body-file' <<<"$text" ||
+    { echo "issue-comments.md does not post with gh issue comment --body-file"; false; }
+}
+
 load support/release
 
 @test "planning vocabulary inputs resolve inside each published flow" {
