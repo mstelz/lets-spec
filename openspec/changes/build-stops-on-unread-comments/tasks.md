@@ -1,7 +1,7 @@
 ## 1. The test seam
 
 - [x] 1.1 [easy] Two new tests fail because `skills/lets-build/SKILL.md` has no link `](../lets-shape/references/issue-comments.md)`: one greps for that exact link, one runs `assert_reference_links` on the skill (verify: bats tests/skill-interfaces.bats --filter "build links") (✓ both new tests fail: the grep finds no link, and assert_reference_links reports "no reference input")
-- [ ] 1.2 [easy] A new `skill_says` test fails because `lets-build` does not say "The watermark is the later of the body's last edit and the newest read marker", and `lets-build` joins the skill loop in `planning vocabulary inputs resolve inside each published flow`, which then fails (verify: bats tests/skill-interfaces.bats --filter "watermark")
+- [x] 1.2 [easy] A new `skill_says` test fails because `lets-build` does not say "The watermark is the later of the body's last edit and the newest read marker", and `lets-build` joins the skill loop in `planning vocabulary inputs resolve inside each published flow`, which then fails (verify: bats tests/skill-interfaces.bats --filter "watermark") (✓ the watermark test fails because lets-build does not say it; the published-flow test fails with "no reference input" for lets-build)
 
 ## 2. The skill and the README [depends-on: 1]
 
