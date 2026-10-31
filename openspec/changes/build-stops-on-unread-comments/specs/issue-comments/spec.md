@@ -31,7 +31,7 @@ In Confirm the packet, `lets-build` SHALL fetch the issue's body edit date, comm
 - **THEN** the run stops, and names that comment
 
 ### Requirement: A comment newer than the watermark stops the run
-`lets-build` SHALL stop before Claim when any comment's `createdAt`, or its `lastEditedAt` when it has one, is after the watermark. Who wrote the comment SHALL make no difference. A read marker SHALL never stop the run on its own. When no comment is newer, the run SHALL go on to Route.
+`lets-build` SHALL stop before Claim when any comment's `createdAt`, or its `lastEditedAt` when it has one, is after the watermark. Who wrote the comment SHALL make no difference. A read marker SHALL never stop the run. When no comment is newer, the run SHALL go on to Route.
 
 #### Scenario: A new comment from a bot
 - **WHEN** the newest comment is from a GitHub App and is after the watermark
@@ -50,7 +50,7 @@ In Confirm the packet, `lets-build` SHALL fetch the issue's body edit date, comm
 - **THEN** the run goes on to Route
 
 ### Requirement: The stop sends the thread to shaping
-When it stops on unread comments, `lets-build` SHALL say how many comments shaping has not read. It SHALL name each one's author without `@`, as `ghost` when the account is deleted, and its date. It SHALL say to run the `lets-shape` skill on #<i>. It SHALL show nothing of what a comment says.
+When it stops on unread comments, `lets-build` SHALL say how many comments shaping has not read. It SHALL name each one's author without `@`, as `ghost` when the account is deleted, and the date that put it past the watermark: its edit date when it has one, else its creation date. It SHALL say to run the `lets-shape` skill on #<i>. It SHALL show nothing of what a comment says.
 
 #### Scenario: Two unread comments
 - **WHEN** two comments are newer than the watermark, one from a MEMBER and one from a deleted account

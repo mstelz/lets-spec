@@ -4,7 +4,7 @@
 
 ## What Changes
 
-- `lets-build`'s Confirm the packet reads the issue's thread with the shared reference's query (D5), works out the watermark (D1), and stops when any comment is newer (D3). The stop says how many comments shaping has not read, names each one's author and date, and says to run `lets-shape` on the issue (D6), as a missing template line does (D7).
+- `lets-build`'s Confirm the packet reads the issue's thread with the shared reference's query (D5), works out the watermark (D1), and stops when any comment is newer (D3). The stop says how many comments shaping has not read, and names each author and date (D6). Like a missing template line, it says to run `lets-shape` on the issue (D7).
 - `lets-build` links `../lets-shape/references/issue-comments.md`. The reference does not change (D9).
 - `tests/skill-interfaces.bats` checks that the skill links the reference, that the link resolves in the source and in each published flow, and that the skill states the watermark (D11).
 - The README says that `lets-build` stops on comments shaping has not read (D12).
