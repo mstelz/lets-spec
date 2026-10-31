@@ -13,7 +13,7 @@
 
 ## 3. Integration [depends-on: 2]
 
-- [ ] 3.1 [easy] The whole suite and the flake pass, including the published-flow link tests for the new reference (verify: pnpm test && nix flake check)
+- [x] 3.1 [easy] The whole suite and the flake pass, including the published-flow link tests for the new reference (verify: pnpm test && nix flake check) (✓ pnpm test and nix flake check passed, including both published-flow link tests)
 
 ## Deviations Ledger
 
