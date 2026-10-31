@@ -10,7 +10,7 @@
 
 ## 3. Integration [depends-on: 2]
 
-- [ ] 3.1 [easy] The whole suite and the flake pass, including the published-flow link test with `lets-build` (verify: pnpm test && nix flake check)
+- [x] 3.1 [easy] The whole suite and the flake pass, including the published-flow link test with `lets-build` (verify: pnpm test && nix flake check) (✓ pnpm test passed: 380 of 380 Node tests, the type check, 126 of 126 bats tests; nix flake check passed, including every-flow)
 
 ## Deviations Ledger
 
