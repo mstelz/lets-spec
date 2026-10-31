@@ -190,7 +190,7 @@ Take in the input — a file path, an issue (`gh issue view <n>`), pasted text, 
 
 **Checkpoint:** The parent issue is public, so confirm its text first. Write it from the parent template in [templates/issue-template.md](templates/issue-template.md): the status line, the input reference, the confirmed scope and any open questions so far. Title it `Epic: <capability>`, create it with `gh issue create --title "Epic: <capability>" --body-file <file> --project "<project title>"`, then set its Kind to `Epic` with `item-edit`. Phase 5 may turn it into a single story.
 
-When the input is an issue, fetch its thread again, even when the first fetch found nothing to ask about. Ask about each comment that is new or edited since the last fetch. When a point goes into the parent, confirm the updated body and write it with `gh issue edit <parent> --body-file <file>`. Repeat until a fetch finds nothing new. Then, when the run judged at least one comment, post one reply on the input issue, as the reference says. It lists each point taken in as `Taken into #<parent>:`.
+When the input is an issue, fetch its thread again, even when the first fetch found nothing to ask about. Ask about each comment that is new or edited since the last fetch. When a point goes into the parent, confirm the updated body and write it with `gh issue edit <parent> --body-file <file>`. Repeat until a fetch finds nothing new. Then, when the run judged at least one comment, post one reply on the input issue, as the reference says. It lists each point taken in as `Taken into #<parent>:`, and each dismissal as `Dismissed:`.
 
 ### Phase 2: Personas
 
