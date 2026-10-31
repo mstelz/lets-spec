@@ -6,7 +6,7 @@
 
 - [x] 2.1 [easy] `skills/lets-shape/references/issue-comments.md` gains the `Map updated:` item in its Reply section, as design decision 8 words it, with the rule that `Folded:` covers a comment that changed both; the fixed-strings test passes (verify: bats tests/skill-interfaces.bats --filter "fixed strings") (✓ bats tests/skill-interfaces.bats --filter "fixed strings" passed)
 - [x] 2.2 [medium] Revision mode step 1 of `skills/lets-shape/SKILL.md` gains the bullet of design decision 1, between the stale-link check and the re-annotation, with the per-issue order of decisions 3 to 7: fetch and list, ask, write the fold body-only with `gh issue edit`, edit the map, fetch again when it asked, reply with `gh issue comment`; the new `skill_says` test passes (verify: bats tests/skill-interfaces.bats --filter "map links") (✓ bats tests/skill-interfaces.bats --filter "map links" passed)
-- [ ] 2.3 [easy] [parallel] The README's `lets-shape` section says a revision run reads the comments on the open stories the map links the same way, as design decision 9 says (verify: grep -qF "open stories the map links" README.md)
+- [x] 2.3 [easy] [parallel] The README's `lets-shape` section says a revision run reads the comments on the open stories the map links the same way, as design decision 9 says (verify: grep -qF "open stories the map links" README.md) (✓ grep -qF "open stories the map links" README.md passed)
 
 ## 3. Integration [depends-on: 2]
 

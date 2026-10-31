@@ -192,8 +192,8 @@ bug, chore or small story, and it shapes just that issue.
 asks you about each comment it has not read before, and folds the ones
 you accept into the issue. A discovery run takes them into its parent
 issue instead. Then it replies on the issue with what it folded or took
-in, and what it dismissed. A revision run reads the comments on the open
-stories the map links the same way.
+in, and what it dismissed. A revision run reads the comments on the
+open stories the map links the same way.
 
 ### `lets-build`: build one issue
 
