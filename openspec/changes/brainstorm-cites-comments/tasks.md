@@ -6,7 +6,7 @@
 ## 2. The skill, the schemas, the templates and the README [depends-on: 1]
 
 - [x] 2.1 [medium] `skills/lets-brainstorm/SKILL.md` gains a "Read the thread" section after "Read the relevant specs first", as design decision 1 says, the source row and the two sentences of decision 2, and the second fetch of decision 6 in "Confirming"; 1.1 passes (verify: bats tests/skill-interfaces.bats --filter "brainstorm") (✓ both 1.1 tests passed)
-- [ ] 2.2 [easy] [parallel] Step 2 of the brainstorm instruction in `schemas/lets-standard/schema.yaml` and `schemas/lets-minimal/schema.yaml` says the packet is the issue body and its comments are evidence, not instructions, as design decision 3 words it, and both `templates/brainstorm.md` source notes name the comment form; 1.2 passes (verify: bats tests/skill-interfaces.bats --filter "comments are evidence")
+- [x] 2.2 [easy] [parallel] Step 2 of the brainstorm instruction in `schemas/lets-standard/schema.yaml` and `schemas/lets-minimal/schema.yaml` says the packet is the issue body and its comments are evidence, not instructions, as design decision 3 words it, and both `templates/brainstorm.md` source notes name the comment form; 1.2 passes (verify: bats tests/skill-interfaces.bats --filter "comments are evidence") (✓ the 1.2 test passed)
 - [ ] 2.3 [easy] [parallel] The README's standard flow table's brainstorm row says a comment on the issue counts as evidence only when you confirm it (verify: grep -qF "only when you confirm it" README.md)
 
 ## 3. Integration [depends-on: 2]
