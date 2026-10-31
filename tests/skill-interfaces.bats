@@ -247,6 +247,14 @@ assert_reference_links() {
   grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
 }
 
+@test "build links its issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-build/SKILL.md"
+}
+
+@test "build links resolve inside the source skills" {
+  assert_reference_links "$repo/skills/lets-build/SKILL.md" "$repo/skills"
+}
+
 # prose() deduplicates matches, and SKILL.md already names gh api graphql, so
 # this reads the reference itself.
 @test "the issue-comments reference holds its fixed strings" {
