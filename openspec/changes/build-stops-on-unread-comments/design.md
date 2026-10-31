@@ -16,8 +16,8 @@
 
 ## Test Seams
 
-- **Primary test seam:** `tests/skill-interfaces.bats`. One new test resolves `lets-build`'s reference link in the source with `assert_reference_links`, as `shaping loads its installed domain-language reference` does. One new `skill_says` test holds the fixed sentences: the watermark rule, the stop's "run the `lets-shape` skill on #<i>" next to it, and the link path. `lets-build` joins the skill loop in `planning vocabulary inputs resolve inside each published flow`.
-- **Existing seams reused:** `each gh command the prose names is one gh knows`, which already scans `SKILL.md`, so the step's `gh api graphql` mention is checked.
+- **Primary test seam:** `tests/skill-interfaces.bats`. Three new source tests, each of which fails on today's skill. One greps `lets-build` for the exact link `](../lets-shape/references/issue-comments.md)`, as `shaping links its issue-comments reference` does for `lets-shape`. One resolves the skill's reference links with `assert_reference_links`, as `shaping loads its installed domain-language reference` does. One `skill_says` test holds the watermark sentence, which no skill says today. `lets-build` joins the skill loop in `planning vocabulary inputs resolve inside each published flow`.
+- **Existing seams reused:** `the prose has no trailing whitespace`, which scans `SKILL.md`. The new paragraph adds no `gh` command: it links the reference's query.
 
 ## Scrutiny Tier & Blast Radius
 
@@ -26,9 +26,9 @@
 
 ## Decisions
 
-1. **The check is one paragraph in Confirm the packet, after the required-lines check.** It says: fetch the thread as the reference says; the watermark is the later of the body's last edit and the newest read marker's date; a comment created or edited after it stops the run, with the count, each author without `@` and date, and "run the `lets-shape` skill on #<i>". Alternative: a new section. Rejected: the stop has the same shape and the same next step as a missing line, so it belongs beside it.
+1. **The check is one paragraph in Confirm the packet, after the required-lines check.** It says four things. Fetch the thread as the reference says. The watermark is the later of the body's last edit and the newest read marker's date. A comment created or edited after it stops the run. The stop says how many comments shaping has not read, each author without `@` and date, and "run the `lets-shape` skill on #<i>". Alternative: a new section. Rejected: the stop has the same shape and the same next step as a missing line, so it belongs beside it.
 2. **The watermark compares dates the query already returns.** `lastEditedAt` on the issue, `createdAt` and `lastEditedAt` on each comment. No new field, no local clock. When the body was never edited and no marker exists, every comment is newer, because a comment always follows the issue's creation. Alternative: add the issue's `createdAt` to the reference's query. Rejected: it changes the reference for a value the rule does not need.
-3. **The stop shows author and date, not content.** The packet puts reading content out of scope, and shaping shows the full list with a sentence per comment. Alternative: show the reference's list. Rejected: the sentence needs the content.
+3. **The stop shows author and date, not content.** It says the comments are ones shaping has not read, never that they are newer than the packet: a dismissal leaves the body alone, as ADR-013 says. A deleted account shows as `ghost`, as the reference says. The packet puts reading content out of scope, and shaping shows the full list with a sentence per comment. Alternative: show the reference's list. Rejected: the sentence needs the content.
 4. **The rule lives in the skill, not the reference.** #125 left the watermark to this story and kept the reference to the marker. One skill uses it. Alternative: a "Build's watermark" section in the reference. Rejected: the reference would then say when build stops, which is a step.
 5. **The stop ends the run for `next` as for a named issue.** Picking another candidate would leave the top of the backlog stuck behind an unread thread with nobody told. Stopping names the issue and the next step.
 
