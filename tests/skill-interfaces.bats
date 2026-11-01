@@ -247,6 +247,18 @@ assert_reference_links() {
   grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
 }
 
+@test "build links its issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-build/SKILL.md"
+}
+
+@test "build links resolve inside the source skills" {
+  assert_reference_links "$repo/skills/lets-build/SKILL.md" "$repo/skills"
+}
+
+@test "build states its watermark" {
+  skill_says lets-build "The watermark is the later of the body's last edit and the newest read marker"
+}
+
 # prose() deduplicates matches, and SKILL.md already names gh api graphql, so
 # this reads the reference itself.
 @test "the issue-comments reference holds its fixed strings" {
@@ -272,7 +284,7 @@ load support/release
     out="$BATS_TEST_TMPDIR/$flow"
     schemas="$(jq -r --arg flow "$flow" '.flows[$flow].schemas | join(",")' "$repo/flows.json")"
     build "$out" "$schemas" $(flow_skills "$flow")
-    for skill in lets-shape lets-brainstorm lets-write-specs; do
+    for skill in lets-shape lets-brainstorm lets-write-specs lets-build; do
       assert_reference_links "$out/overlay/.agents/skills/$skill/SKILL.md" "$out/overlay"
     done
     for schema in $(jq -r --arg flow "$flow" '.flows[$flow].schemas[]' "$repo/flows.json"); do
