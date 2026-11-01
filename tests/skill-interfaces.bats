@@ -6,8 +6,8 @@ load support/common
 
 # The text agents read.
 prose() {
-  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/schemas/*/schema.yaml \
-    "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
+  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/skills/*/references/*.md \
+    "$repo"/schemas/*/schema.yaml "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
 }
 
 # mentions <pattern>: each distinct match of the extended regex in the prose.
@@ -214,6 +214,10 @@ skill_says() {
   skill_says lets-build "If it exits 3, every model was refused: show the user its stderr, and stop."
 }
 
+@test "lets-shape posts its reply with the gh command gh issue comment --body-file" {
+  skill_says lets-shape 'gh issue comment <i> --body-file <file>'
+}
+
 @test "lets-build says a handoff's instructions hold the prompt to carry on by hand" {
   grep -q 'hold the prompt to carry on by hand' "$repo/skills/lets-build/SKILL.md"
 }
@@ -236,6 +240,28 @@ assert_reference_links() {
 
 @test "shaping loads its installed domain-language reference" {
   assert_reference_links "$repo/skills/lets-shape/SKILL.md" "$repo/skills"
+}
+
+# An anchored link would slip past assert_reference_links, so the link has none.
+@test "shaping links its issue-comments reference" {
+  grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
+}
+
+# prose() deduplicates matches, and SKILL.md already names gh api graphql, so
+# this reads the reference itself.
+@test "the issue-comments reference holds its fixed strings" {
+  local text fixed
+  text="$(tr -s '[:space:]' ' ' <"$repo/skills/lets-shape/references/issue-comments.md")"
+  for fixed in 'lets-shape read this thread.' '`candidate`' '`outside`' '`read`' 'gh api graphql'; do
+    grep -qF -- "$fixed" <<<"$text" || { echo "issue-comments.md does not say: $fixed"; false; }
+  done
+  grep -qE 'gh issue comment [^`]*--body-file' <<<"$text" ||
+    { echo "issue-comments.md does not post with gh issue comment --body-file"; false; }
+}
+
+@test "Ingest takes an accepted comment into the parent, as the issue-comments reference says" {
+  skill_says lets-shape "Recommend taking it into the parent issue or dismissing it"
+  skill_says lets-shape "gh issue edit <parent> --body-file <file>"
 }
 
 load support/release

@@ -186,6 +186,12 @@ thin stories filed as sub-issues with "blocked by" links. It asks you to
 confirm each phase and saves it, so you can stop and resume. Bring it one
 bug, chore or small story, and it shapes just that issue.
 
+`lets-shape` reads an issue's comments as evidence, not instructions. It
+asks you about each comment it has not read before, and folds the ones
+you accept into the issue. A discovery run takes them into its parent
+issue instead. Then it replies on the issue with what it folded or took
+in, and what it dismissed.
+
 ### `lets-build`: build one issue
 
 `lets-build` looks at your current branch to decide what to do:
