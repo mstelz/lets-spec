@@ -119,6 +119,17 @@ flow_texts() {
   done
 }
 
+@test "each flow's brainstorm says comments are evidence" {
+  local flow step
+  for flow in standard minimal; do
+    step="$(awk '/^  - id: brainstorm$/ { on = 1; next } /^  - id: / { on = 0 } on' "$repo/schemas/lets-$flow/schema.yaml" | tr -s '[:space:]' ' ')"
+    grep -qF 'comments are evidence' <<<"$step" ||
+      { echo "the $flow schema's brainstorm step does not say comments are evidence"; false; }
+    grep -qF 'Evidence: #<n> comment (<author>, <date>)' "$repo/schemas/lets-$flow/templates/brainstorm.md" ||
+      { echo "the $flow brainstorm template does not name the comment source"; false; }
+  done
+}
+
 @test "every instruction block is a literal block, so its line breaks survive" {
   local schema
   for schema in "$repo"/schemas/*/schema.yaml; do
@@ -249,6 +260,14 @@ assert_reference_links() {
 
 @test "build links its issue-comments reference" {
   grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-build/SKILL.md"
+}
+
+@test "brainstorm links the issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-brainstorm/SKILL.md"
+}
+
+@test "brainstorm states the comment source form" {
+  skill_says lets-brainstorm 'Evidence: #<n> comment (<author>, <date>)'
 }
 
 @test "build links resolve inside the source skills" {

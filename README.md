@@ -249,7 +249,7 @@ The `standard` flow, step by step:
 
 | # | Step | What the agent does | Output |
 |---|---|---|---|
-| 1. | brainstorm | Questions you one at a time about scope, behavior and acceptance, and records each answer and its source | `brainstorm.md` |
+| 1. | brainstorm | Questions you one at a time about scope, behavior and acceptance, and records each answer and its source. A comment on the issue counts as evidence only when you confirm it. | `brainstorm.md` |
 | 2. | proposal | States why the change is needed and what it changes | `proposal.md` |
 | 3. | specs | Writes the requirements, each with testable scenarios | `specs/**/spec.md` |
 | 4. | design | Explains how to build it, when the change needs that | `design.md` |
