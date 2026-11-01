@@ -322,6 +322,12 @@ When `discovery.md` exists and no run is in progress:
      - the stage now works: upgrade it and drop the link;
      - an open issue now closes the gap: link that one instead;
      - nothing open does: drop the link and leave the stage an unplanned `gap`.
+   - **Read the thread of each open issue the map links**, one issue at a time, in ascending number. Take the numbers from the map's `issues/<n>` links, and keep those the issue list shows as open. Finish each issue before you fetch the next:
+     1. Fetch the thread and show the list, as [Issue comments](references/issue-comments.md) says.
+     2. Ask about each comment not labelled `read`, in list order, one at a time. When a comment changes the packet, recommend a fold, naming the line. When it changes a stage and not the packet, recommend updating the map, naming the stage. When the packet already holds it, or it changes neither, recommend dismiss, and say why.
+     3. Write what the answers call for. For a fold, show the folded body, get a yes, and write it once with `gh issue edit <i> --body-file <file>`. Write the body only. The story may be In Progress, so leave its title and Project fields as they are. For a map change, edit `discovery.md` now, with one of the three outcomes above.
+     4. If you asked anything, fetch the thread again after the write, or after the last answer when nothing was folded. Ask about each new or edited comment, and write what each yes calls for. Repeat until a fetch finds nothing new.
+     5. Post one reply with `gh issue comment <i> --body-file <file>`. An issue with nothing to ask gets no second fetch and no reply.
    - Re-annotate every journey stage against the code; stages move to `supported` as their stories ship
    - Update the freshness line to today
 2. **Take in what the user brings** — a new PRD, new requirements, changed priorities, learnings from shipped stories. New work is a new run with its own parent issue: Ingest, then MoSCoW and Stories. Revisit Personas and the Journey Map only when the input changes who the product serves or how they use it.
