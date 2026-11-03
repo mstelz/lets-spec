@@ -7,7 +7,22 @@
     "noEmit": true,
     "module": "nodenext",
     "target": "es2024",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["lets/src", "tests/lets", "contrib/resolver-kit/src", "tests/resolver-kit", "contrib/t3-resolver/src", "tests/t3-resolver", "contrib/cli-resolver/src", "tests/cli-resolver", "contrib/subagent-resolver/src", "tests/subagent-resolver"]
+  "include": [
+    "lets/src",
+    "tests/lets",
+    "contrib/resolver-kit/src",
+    "tests/resolver-kit",
+    "contrib/t3-resolver/src",
+    "tests/t3-resolver",
+    "contrib/cli-resolver/src",
+    "tests/cli-resolver",
+    "contrib/subagent-resolver/src",
+    "tests/subagent-resolver",
+    "contrib/backlog-adapter-kit",
+    "tests/backlog-adapter-kit"
+  ]
 }

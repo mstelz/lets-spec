@@ -161,7 +161,8 @@
         # The folder the release tarball is made from: the lets bundle, one
         # release for every flow, and the contrib resolvers outside bin/, so
         # mise never puts them on a project's PATH. CI sets the real version.
-        dist = pkgs.runCommand "lets-spec-dist" { } ''
+        dist = pkgs.runCommand "lets-spec-dist" { nativeBuildInputs = [ pkgs.nodejs_26 ]; } ''
+          node ${./contrib/backlog-adapter-kit/build.mjs} ${self} $out
           mkdir -p $out/bin $out/releases $out/contrib
           cp ${lets-cli}/libexec/lets $out/bin/lets
           cp ${lets-delegate-t3}/libexec/lets-delegate-t3 $out/contrib/lets-delegate-t3
@@ -284,7 +285,7 @@
             [ "$(head -n 1 ${dist}/bin/lets)" = '#!/usr/bin/env node' ]
             [ ! -e ${dist}/node_modules ]
             # The resolvers are per user, so they are never on a project's PATH.
-            [ "$(ls ${dist}/contrib | tr '\n' ' ')" = "headless-resolver lets-delegate-cli lets-delegate-subagent lets-delegate-t3 " ]
+            [ "$(ls ${dist}/contrib | tr '\n' ' ')" = "backlog-adapter-kit headless-resolver lets-delegate-cli lets-delegate-subagent lets-delegate-t3 " ]
             [ -x ${dist}/contrib/headless-resolver ]
             [ "$(head -n 1 ${dist}/contrib/headless-resolver)" = '#!/bin/sh' ]
             for program in lets-delegate-cli lets-delegate-subagent lets-delegate-t3; do
@@ -293,6 +294,9 @@
             done
             [ "$(ls ${dist}/releases)" = "${names}" ]
             [ "$(jq -r .openspec ${dist}/release.json)" = "${pkgs.openspec.version}" ]
+            cp -R ${dist} kit
+            chmod -R u+w kit
+            (cd kit && node --test "tests/backlog-adapter-kit/*.test.ts")
             mkdir project
             cd project
             git init --quiet
@@ -344,7 +348,7 @@
             # sandbox has no /usr/bin/env or /bin/sh.
             patchShebangs tests contrib/t3-resolver/bin contrib/cli-resolver/bin contrib/subagent-resolver/bin contrib/headless-resolver
             # Node's runner expands the glob itself. It does not take a folder.
-            node --test "tests/lets/**/*.test.ts" "tests/resolver-kit/*.test.ts" "tests/t3-resolver/*.test.ts" "tests/cli-resolver/*.test.ts" "tests/subagent-resolver/*.test.ts"
+            node --test "tests/lets/**/*.test.ts" "tests/resolver-kit/*.test.ts" "tests/t3-resolver/*.test.ts" "tests/cli-resolver/*.test.ts" "tests/subagent-resolver/*.test.ts" "tests/backlog-adapter-kit/*.test.ts"
             pnpm check
             # The default, lets-delegate-subagent, the contrib resolvers and the shell example
             # keep the shape of the contract. None starts a session here.

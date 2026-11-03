@@ -1041,3 +1041,8 @@ each t3 update, run the smoke test in
 ## 📄 License
 
 [GNU General Public License v3.0](LICENSE).
+
+The [backlog adapter contract](docs/backlog-adapter-contract.md) and
+[offline conformance kit](contrib/backlog-adapter-kit/README.md) define the
+future provider boundary. Run `pnpm test:backlog` to check its representative
+simulations. The kit ships in the release; it does not enable production adapters.
