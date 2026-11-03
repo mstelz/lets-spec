@@ -49,3 +49,7 @@ test('enumeration response requires explicit completeness', async () => {
   const { validateResponse } = await import('../../contrib/backlog-adapter-kit/protocol.ts');
   assert.throws(() => validateResponse({ protocol: 1, ok: true, result: { items: [] } }, 0, 'candidate.list'), /complete/);
 });
+test('read response validates normalized item fields', async () => {
+  const { validateResponse } = await import('../../contrib/backlog-adapter-kit/protocol.ts');
+  assert.throws(() => validateResponse({ protocol: 1, ok: true, result: { item: {} } }, 0, 'item.read'), /item/);
+});

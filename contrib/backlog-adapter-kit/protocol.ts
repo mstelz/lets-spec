@@ -1,3 +1,4 @@
+import { validateItem } from './items.ts';
 import { isAbsolute } from 'node:path';
 /** Offline contract definitions; not a production dispatcher. */
 export const PROTOCOL = 1;
@@ -34,6 +35,8 @@ export function validateResponse(value: unknown, exitCode: number, operation?: s
     if (operation) {
       if (!(operation in OUTPUTS)) throw new Error('unknown response operation');
       fields(result, OUTPUTS[operation], 'result');
+      if (['item.read', 'item.create', 'item.update'].includes(operation)) validateItem(result.item);
+      if (['item.search', 'candidate.list'].includes(operation)) for (const item of result.items as unknown[]) validateItem(item);
       if ('complete' in result && (result.complete === true ? result.nextCursor !== null : typeof result.nextCursor !== 'string' || !result.nextCursor)) throw new Error('invalid pagination completeness/cursor');
     }
     if ('error' in response) throw new Error('successful result cannot contain error');
