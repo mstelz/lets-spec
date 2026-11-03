@@ -70,3 +70,6 @@ for (const status of ['Done', 'In Progress']) {
     assert.throws(() => validateRequest({ protocol: 1, operation: 'item.create', context, mutationId: 'm', input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: status } } }), /Todo/);
   });
 }
+test('completion request requires associated reference', () => {
+  assert.throws(() => validateRequest({ protocol: 1, operation: 'completion.write', context, mutationId: 'm', input: { item: identity, merge: { merged: true, commit: 'x' } } }), /reference/);
+});

@@ -18,3 +18,14 @@ test('lost completion response can be retried without duplicate effects', async 
   assert.equal(await complete(item, merged.reference, async () => merged), 'Done');
   assert.equal(item.completionEffects, 1);
 });
+for (const [reference, evidence] of [
+  [undefined, { merged: true, commit: 'x' }],
+  ['host/pr/1', { reference: 'host/pr/1', merged: 'no', commit: 'x' }],
+  ['host/pr/1', { reference: 'host/pr/1', merged: true, commit: 1 }],
+] as const) {
+  test(`completion rejects malformed evidence ${JSON.stringify(evidence)}`, async () => {
+    const item = { status: 'In Progress', completionEffects: 0 };
+    await assert.rejects(complete(item, reference as any, async () => evidence as any));
+    assert.equal(item.status, 'In Progress');
+  });
+}

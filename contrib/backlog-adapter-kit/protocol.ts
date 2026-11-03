@@ -16,6 +16,7 @@ export function validateRequest(value: unknown): void {
   if (request.operation === 'item.read') validateIdentity((request.input as Record<string, unknown>)?.item);
   fields(request.input, INPUTS[request.operation as string], 'input');
   const input = request.input as Record<string, unknown>;
+  if (request.operation === 'completion.write') fields(input.merge, { reference: 'text', merged: 'boolean', commit: 'string' }, 'input.merge');
   if (request.operation === 'item.update') fields(input.patch, { 'title?': 'text', 'body?': 'string', 'metadata?': 'object' }, 'input.patch');
   const metadata = request.operation === 'item.create' ? input.metadata : request.operation === 'item.update' ? (input.patch as Record<string, unknown>).metadata : undefined;
   if (metadata !== undefined) {
