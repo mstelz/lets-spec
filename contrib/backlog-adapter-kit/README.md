@@ -11,7 +11,7 @@ node --test "tests/backlog-adapter-kit/*.test.ts"
 
 From a source checkout, `pnpm test:backlog` runs the same suite. `pnpm test`
 also includes it and type-checks the kit. `nix flake check` checks it and the
-standalone distribution. The release includes this directory, the tests and
+standalone distribution with one round-trip smoke check. The release includes this directory, the tests and
 the contract in their repository-relative locations. Run from the release root.
 Scratch state lives under `.workspace/` and is removed after each profile.
 
@@ -21,7 +21,9 @@ has no shell arguments. Valid provider failures reject with `AdapterFailure`,
 preserving category and effects just like transport failures. This lets
 `recoverMutation` reconcile adapter-reported uncertain writes as well as timeouts. Test options permit an interpreter plus fixture path.
 `conformance.ts` exports `workflowOutcomes(call, provider, evidence)` for a disposable
-acceptance backlog, and `runProfile(provider, fault?)` for offline simulations.
+acceptance backlog. The suite runs that shared lifecycle once, with named
+provider cases for mappings, references and URL presence; these are behavioral
+variations of one fake, not four API implementations.
 Evidence names the authenticated actor/session and supplies an adapter-specific
 `inspectUnrelated(identity)` callback that snapshots seeded unrelated provider
 data before and after targeted writes. This test-only observation stays outside

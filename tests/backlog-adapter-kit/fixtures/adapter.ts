@@ -18,3 +18,13 @@ export async function withAdapter<T>(run: (fixture: {
   try { return await run({ call, state: () => JSON.parse(readFileSync(join(cwd, 'simulation.json'), 'utf8')) }); }
   finally { rmSync(cwd, { recursive: true, force: true }); }
 }
+export async function runWorkflow(fault?: string): Promise<void> {
+  const { workflowOutcomes } = await import('../../../contrib/backlog-adapter-kit/conformance.ts');
+  await withAdapter(async ({ call, state }) => workflowOutcomes(
+    (operation, input, key, worker) => call(operation, input, key, { fault, context: worker }), 'beads',
+    { actor: 'me', session: 'worker', inspectUnrelated: async identity => {
+      const data = state().items[JSON.stringify([identity.provider, identity.backlog, identity.id])].data;
+      return { custom: data.custom, labels: data.labels.filter((label: string) => !/^(Kind|Priority|Size|Status):/.test(label)) };
+    } },
+  ));
+}

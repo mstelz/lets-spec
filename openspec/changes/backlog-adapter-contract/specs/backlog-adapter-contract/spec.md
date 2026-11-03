@@ -127,7 +127,8 @@ The delivered contract SHALL include a traceable behavior inventory, rationale f
 
 #### Scenario: Four profiles are checked
 - **WHEN** the offline conformance suite runs
-- **THEN** it reports results for all four representative profiles, including relationships, mapped metadata, identity, claims and completion
+- **THEN** it reports named variation cases for all four profiles covering mapped metadata, identity and optional URLs
+- **AND** a shared executable suite checks the common relationship, claim, recovery and completion outcomes
 - **AND** the evidence matrix distinguishes documented facts from assumptions and live checks still needed
 
 #### Scenario: Fake violates a required guarantee

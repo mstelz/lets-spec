@@ -1,10 +1,5 @@
-import { AdapterFailure } from './errors.ts';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { invoke } from './process.ts';
-import { validateItem, identityKey } from './items.ts';
+import { validateItem } from './items.ts';
 import { requireCapability } from './capabilities.ts';
 export type AdapterCall = (operation: string, input: Record<string, unknown>, mutationId?: string, worker?: { actor: string; session: string }) => Promise<Record<string, any>>;
 /** Reusable workflow checks. Call only against a disposable acceptance backlog. */
@@ -63,20 +58,4 @@ export async function workflowOutcomes(call: AdapterCall, provider: string, evid
   assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Done', 'claim read cannot reopen completed work');
   await assert.rejects(call('claim.release', { item: child.identity, token: claim.token }, 'release-done'), /conflict/);
   assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Done');
-}
-export async function runProfile(provider: string, fault?: string): Promise<true> {
-  mkdirSync('.workspace', { recursive: true });
-  const cwd = mkdtempSync(join(process.cwd(), '.workspace/backlog-conformance-'));
-  const context = { cwd, provider, backlog: 'acceptance', repository: 'fixture', actor: 'me', session: 'worker' };
-  const call: AdapterCall = async (operation, input, mutationId, worker) => {
-    const response = await invoke(process.execPath, { protocol: 1, operation, context: { ...context, ...worker }, input, ...(mutationId ? { mutationId } : {}) }, { args: [fileURLToPath(new URL('./fake.ts', import.meta.url)), ...(fault ? [fault] : [])] });
-    if (!response.ok) throw new AdapterFailure(response.error.category, response.error.effects, response.error.message);
-    return response.result;
-  };
-  try { await workflowOutcomes(call, provider, { actor: context.actor, session: context.session, inspectUnrelated: async identity => {
-    const state = JSON.parse(readFileSync(join(cwd, 'simulation.json'), 'utf8'));
-    const data = state.items[identityKey(identity)].data;
-    return { custom: data.custom, labels: Array.isArray(data.labels) ? data.labels.filter((label: string) => !/^(Kind|Priority|Size|Status):/.test(label)) : [] };
-  } }); return true; }
-  finally { rmSync(cwd, { recursive: true, force: true }); }
 }

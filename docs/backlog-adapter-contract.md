@@ -6,6 +6,10 @@ representative simulations; passing them does not establish provider support.
 
 ## Workflow inventory
 
+The inventory table test checks structure and required mapping names; it does
+not prove preservation of every instruction. Review compares the documented
+responsibilities with the source skills.
+
 The baseline is `skills/lets-setup-backlog/SKILL.md`,
 `skills/lets-shape/SKILL.md`, `skills/lets-build/SKILL.md` and
 `overlays/AGENTS.md`. Shared policy owns decisions; adapters translate provider
@@ -273,8 +277,9 @@ Evidence checked 2026-11-03. These are dated documentation snapshots, not tested
 provider versions. The executable profiles are simulations, not API clients.
 N = native documented concept; E = adapter mapping/emulation assumed by this
 contract; U = unsupported unless the stated prerequisite is established.
-Scenario names refer to providers.test.ts, which runs workflowOutcomes for all
-four profiles. The separate process, items, capabilities, claims, recovery and
+providers.test.ts runs the common lifecycle once and names the four provider
+variation cases for scalar/label mappings, references and optional URLs. The
+profiles share behavior; they are not four provider API implementations. The separate process, items, capabilities, claims, recovery and
 completion tests cover negative and uncertain outcomes.
 
 | Profile | Primary-source facts | Simulated classification and assumptions | Remaining live acceptance |
@@ -290,7 +295,7 @@ must stop before mutation. The kit's journal models durable reconciliation but
 does not provide it for a real provider. No documentation cited here establishes
 atomic assignment-plus-status, exactly-once create or session-safe release.
 
-The same executable lifecycle creates and retries an item, maps metadata,
+The shared executable lifecycle creates and retries an item, maps metadata,
 round-trips hierarchy and blockers, distinguishes related links, verifies claims,
 associates a code-host reference, rejects an unmerged completion and completes
 idempotently after merge. Broken duplicate-create and ignored-blocker fixtures
