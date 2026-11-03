@@ -249,3 +249,34 @@ Check merge even when provider automation already set Done. After confirmation,
 already Done is success without another effect. A lost completion response is
 recovered by reading status and retrying the same desired state. Review readiness
 and archive leave In Progress; only confirmed merge permits completion.
+
+## Evidence matrix for representative profiles
+
+Evidence checked 2026-11-03. These are dated documentation snapshots, not tested
+provider versions. The executable profiles are simulations, not API clients.
+N = native documented concept; E = adapter mapping/emulation assumed by this
+contract; U = unsupported unless the stated prerequisite is established.
+Scenario names refer to providers.test.ts, which runs workflowOutcomes for all
+four profiles. The separate process, items, capabilities, claims, recovery and
+completion tests cover negative and uncertain outcomes.
+
+| Profile | Primary-source facts | Simulated classification and assumptions | Remaining live acceptance |
+|---|---|---|---|
+| GitHub Issues/Projects | [Dependencies](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-issue-dependencies) distinguish blocked-by and blocking and require triage permission. [Sub-issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues) support hierarchy. [Single-select fields](https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-single-select-fields) provide configurable options. | Identity N (issue node ID plus Project scope); hierarchy/blockers N; shared metadata E through Project fields; claim E best-effort; PR reference/completion E through caller evidence. Atomic claim U. Project discovery must inspect both repository and owner listings. | Verify scopes, Project linkage in both directions, full pagination, field IDs/options, sub-issue and dependency direction, assignment/status partial writes, durable session provenance, create reconciliation and merge closing automation. |
+| Jira Cloud REST v3 | [Issues API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/) documents issue fields, parent relationships, assignment and workflow transitions. [Issue links](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/) use inward/outward issues and link types. | Identity N (tenant/project plus opaque ID); hierarchy/blockers N when configured; shared metadata E through native/custom fields; claim E best-effort; references/completion E. Atomic claim U. Tenant permissions and issue-type hierarchy are prerequisites; generic related links are insufficient. | Verify actual parent hierarchy, configured Blocks link direction, field schemas, permitted transitions, account IDs, permissions, pagination, retried link writes, partial claim recovery and merge-triggered automation. |
+| Linear GraphQL | [Issue properties](https://linear.app/docs/issue-properties-home) include status, priority, labels, estimates and directional relations. [Parent/sub-issues](https://linear.app/docs/parent-and-sub-issues) represent hierarchy. [Developer API](https://linear.app/developers/graphql) provides authenticated GraphQL access. | Identity N (workspace/team scope plus opaque ID); hierarchy/blockers N; four shared fields E via configured fields/labels; claims E best-effort; references/completion E. Atomic claim U. Wont and Size meanings must be explicit mappings rather than guessed numeric priority or estimates. | Verify workspace/team membership, cursor traversal, relation direction, all mapped values, unrelated label preservation, account/session ownership, rate limits, create deduplication and GitHub automation behavior. |
+| Local Beads | [Upstream CLI reference](https://raw.githubusercontent.com/gastownhall/beads/main/docs/CLI_REFERENCE.md), redirected upstream to gastownhall/beads, documents local IDs, child listing, dependency commands, assignment, updates, labels and close operations. | Identity N without browser URL; hierarchy/blockers N for selected CLI version; metadata E through labels/fields; claims E best-effort conservatively; references/completion E. Stronger claims U until version-specific primitives are verified. Storage/tracking policy is explicit. | Pin bd version and storage engine; verify JSON outputs, dependency orientation and related-link distinction, native claim behavior, session provenance, concurrent writers, interrupted writes, close retries and every generated file's tracking policy. |
+
+All profiles assume a selected disposable backlog, sufficient permissions and
+complete relationship reads. If those assumptions fail, capability validation
+must stop before mutation. The kit's journal models durable reconciliation but
+does not provide it for a real provider. No documentation cited here establishes
+atomic assignment-plus-status, exactly-once create or session-safe release.
+
+The same executable lifecycle creates and retries an item, maps metadata,
+round-trips hierarchy and blockers, distinguishes related links, verifies claims,
+associates a code-host reference, rejects an unmerged completion and completes
+idempotently after merge. Broken duplicate-create and ignored-blocker fixtures
+must fail those checks. Production support additionally requires automated
+adapter tests plus an end-to-end run against the actual configured provider,
+including fault injection and cleanup. Offline fake results cannot replace it.
