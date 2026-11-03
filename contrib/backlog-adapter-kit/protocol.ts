@@ -10,10 +10,11 @@ export function validateRequest(value: unknown): void {
   if (!(OPERATIONS as readonly unknown[]).includes(request.operation)) throw new Error('unknown operation');
   const context = request.context as Record<string, unknown> | undefined;
   const discovery = request.operation === 'backlog.list' || request.operation === 'backlog.create';
-  for (const field of ['cwd', 'provider', 'repository', 'actor', 'session', ...(discovery ? [] : ['backlog'])]) {
+  for (const field of ['cwd', 'provider', 'repository', 'actor', 'session', ...(discovery || request.operation === 'mutation.read' ? [] : ['backlog'])]) {
     if (!context || typeof context[field] !== 'string' || context[field] === '') throw new Error(`context.${field} is required`);
   }
-  if (discovery && context?.backlog !== undefined && (typeof context.backlog !== 'string' || !context.backlog)) throw new Error('context.backlog must be omitted or nonempty');
+  if (discovery && context?.backlog !== undefined) throw new Error('context.backlog must be omitted for discovery/create');
+  if (request.operation === 'mutation.read' && context?.backlog !== undefined && (typeof context.backlog !== 'string' || !context.backlog)) throw new Error('context.backlog must be omitted or nonempty');
   if (MUTATIONS.includes(request.operation as string) && (typeof request.mutationId !== 'string' || request.mutationId === '')) throw new Error('mutationId is required');
   if (request.operation === 'item.read') validateIdentity((request.input as Record<string, unknown>)?.item);
   fields(request.input, INPUTS[request.operation as string], 'input');

@@ -18,3 +18,14 @@ test('item reads cannot cross repository scope', () => withAdapter(async ({ call
   const { item } = await call('item.create', story, 'create');
   await assert.rejects(call('item.read', { item: item.identity }, undefined, { context: { repository: 'other' } }), /not_found/);
 }));
+test('lost backlog creation is reconciled before selecting it', () => withAdapter(async ({ call }) => {
+  const context = { backlog: undefined };
+  const input = { title: 'Created once' };
+  await assert.rejects(call('backlog.create', input, 'new', { context, fault: 'error-unknown_outcome' }), /unknown_outcome/);
+  const recovered = await call('mutation.read', { mutationId: 'new' }, undefined, { context });
+  assert.equal(recovered.state, 'applied');
+  assert.ok(recovered.result.backlog);
+  assert.deepEqual(await call('backlog.create', input, 'new', { context }), recovered.result);
+  await assert.rejects(call('backlog.create', input, 'new', { context: { backlog: recovered.result.backlog } }), /backlog.*omit/);
+  assert.equal((await call('backlog.list', {}, undefined, { context })).items.length, 1);
+}));

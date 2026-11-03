@@ -56,7 +56,9 @@ sets the process working directory to it. No adapter may infer another backlog.
 Requests contain `protocol: 1`, `operation`, `context`, `input`, and, for a
 mutation, a nonempty `mutationId` reused across retries. Context requires `cwd`,
 `provider`, `repository`, `actor` and `session`. Item operations additionally
-require `backlog`; backlog.list and backlog.create omit it before selection. Actor identifies the
+require `backlog`; backlog.list and backlog.create must omit it. mutation.read
+also omits it when reconciling a preselection creation; otherwise it uses the
+original selected backlog. Actor identifies the
 authenticated account; session identifies this worker, even when two workers
 share an account. Backlog and item IDs are opaque, provider-scoped strings.
 An item identity is `{provider, backlog, id}`. A display reference is required
@@ -115,7 +117,9 @@ discovery lists linked identities in that scope; creation returns a new identity
 The caller selects exactly one and supplies context.backlog on subsequent item
 operations. Those operations, including enumeration, are confined to that backlog. Reads
 have no effects. Mutations require a key scoped to provider, backlog, repository, actor and session, bound to the
-operation and exact input;
+operation and exact input. Discovery creation keys have no backlog component;
+reconcile and replay with the original preselection context, never a guessed or
+newly selected backlog;
 reusing a key with different input is invalid_request.
 
 | Operation | Preconditions and input | Successful result and effects | Recovery |
