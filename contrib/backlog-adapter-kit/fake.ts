@@ -18,6 +18,7 @@ try {
   if (fault === 'overstate-claim') capabilities.claims.guarantee = 'atomic';
   const path = join(context.cwd, 'simulation.json');
   const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0, backlogs: [] };
+  if (context.backlog !== undefined && !state.backlogs.some((backlog: any) => backlog.id === context.backlog && backlog.provider === context.provider && backlog.repository === context.repository)) throw new Error('not_found: selected backlog');
   const scope = JSON.stringify([context.provider, context.backlog, context.repository, context.actor, context.session]);
   const key = `${scope}:${mutationId}`;
   const fingerprint = JSON.stringify({ operation, input });

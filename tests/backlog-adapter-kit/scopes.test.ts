@@ -7,11 +7,12 @@ test('creation establishes a selection that discovery can find', () => withAdapt
   const created = await call('backlog.create', { title: 'New backlog' }, 'new-backlog', { context });
   assert.ok(created.backlog);
   assert.deepEqual((await call('backlog.list', {}, undefined, { context })).items.map((item: any) => item.id), [created.backlog]);
-}));
+}, 'beads', false));
 for (const context of [{ backlog: 'other' }, { repository: 'other' }, { provider: 'jira' }]) {
   test(`enumeration excludes other scope ${JSON.stringify(context)}`, () => withAdapter(async ({ call }) => {
     await call('item.create', story, 'create');
-    for (const operation of ['candidate.list', 'item.search']) assert.deepEqual((await call(operation, operation === 'item.search' ? { query: 'Contract' } : {}, undefined, { context })).items, []);
+    const { backlog } = await call('backlog.create', { title: 'Other scope' }, 'other-backlog', { context: { ...context, backlog: undefined } });
+    for (const operation of ['candidate.list', 'item.search']) assert.deepEqual((await call(operation, operation === 'item.search' ? { query: 'Contract' } : {}, undefined, { context: { ...context, backlog } })).items, []);
   }));
 }
 test('item reads cannot cross repository scope', () => withAdapter(async ({ call }) => {
@@ -28,4 +29,9 @@ test('lost backlog creation is reconciled before selecting it', () => withAdapte
   assert.deepEqual(await call('backlog.create', input, 'new', { context }), recovered.result);
   await assert.rejects(call('backlog.create', input, 'new', { context: { backlog: recovered.result.backlog } }), /backlog.*omit/);
   assert.equal((await call('backlog.list', {}, undefined, { context })).items.length, 1);
-}));
+}, 'beads', false));
+for (const operation of ['backlog.check', 'item.create']) {
+  test(`${operation} rejects a nonexistent selection`, () => withAdapter(async ({ call }) => {
+    await assert.rejects(call(operation, operation === 'item.create' ? story : {}, operation === 'item.create' ? 'create' : undefined, { context: { backlog: 'nonexistent' } }), /not_found.*backlog/);
+  }));
+}
