@@ -16,7 +16,7 @@ export function validateItem(value: unknown): asserts value is Item {
 export function identityKey(identity: Identity): string { validateIdentity(identity); return JSON.stringify([identity.provider, identity.backlog, identity.id]); }
 export type Mappings = Record<string, { field: string; values: Record<string, string> }>;
 export function validateMappings(mappings: Mappings): void {
-  object(mappings, 'mappings');
+  object(mappings, 'invalid_configuration: mappings');
   const used = new Set<string>();
   for (const [field, values] of Object.entries(METADATA)) {
     const mapping = mappings[field];
