@@ -19,3 +19,16 @@ test('process terminates on timeout', async () => {
 test('process bounds output', async () => {
   await assert.rejects(invoke(process.execPath, request, { args: [fixture, 'overflow'], maxBytes: 100 }), /output limit/);
 });
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+for (const category of ['authentication', 'permission', 'transient', 'unknown_outcome']) {
+  test(`representative executable reports ${category}`, async () => {
+    mkdirSync('.workspace', { recursive: true }); const cwd = mkdtempSync(join(process.cwd(), '.workspace/error-profile-'));
+    try {
+      const simulated = { protocol: 1, operation: 'item.create', mutationId: 'write', context: { ...request.context, cwd, provider: 'beads' }, input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: 'Todo' } } };
+      const result = await invoke(process.execPath, simulated, { args: [fileURLToPath(new URL('../../contrib/backlog-adapter-kit/fake.ts', import.meta.url)), `error-${category}`] });
+      assert.equal(result.ok, false); assert.equal(result.error.category, category);
+      assert.equal(result.error.effects, category === 'unknown_outcome' ? 'unknown' : 'none');
+    } finally { rmSync(cwd, { recursive: true, force: true }); }
+  });
+}

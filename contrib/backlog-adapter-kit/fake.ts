@@ -1,7 +1,7 @@
 /** Executable representative simulation. No provider SDK, credentials or network. */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { validateRequest } from './protocol.ts';
+import { validateRequest, ERRORS } from './protocol.ts';
 import { profile } from './profiles.ts';
 import { identityKey, updateMapped, readMapped, validateItem } from './items.ts';
 import { Relationships } from './capabilities.ts';
@@ -13,6 +13,7 @@ try {
   const { context, input, operation, mutationId } = request;
   const { capabilities, mappings } = profile(context.provider);
   const fault = process.argv[2];
+  if (['error-authentication', 'error-permission', 'error-transient'].includes(fault)) throw new Error(`${fault.slice(6)}: simulated provider failure`);
   if (fault === 'overstate-claim') capabilities.claims.guarantee = 'atomic';
   const path = join(context.cwd, 'simulation.json');
   const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0 };
@@ -94,10 +95,11 @@ try {
     }
     if (mutationId) state.journal[key] = { fingerprint, result };
     if (mutationId) writeFileSync(path, JSON.stringify(state));
+    if (mutationId && fault === 'error-unknown_outcome') throw new Error('unknown_outcome: response lost after persisted mutation');
   }
   process.stdout.write(JSON.stringify({ protocol: 1, ok: true, result }));
 } catch (error) {
   const message = String(error);
-  const category = ['invalid_request', 'invalid_configuration', 'not_found', 'unsupported', 'conflict'].find(category => message.includes(category)) ?? 'invalid_request';
-  process.stdout.write(JSON.stringify({ protocol: 1, ok: false, error: { category, message, effects: 'none' } })); process.exitCode = 1;
+  const category = ERRORS.find(category => message.includes(category)) ?? 'invalid_request';
+  process.stdout.write(JSON.stringify({ protocol: 1, ok: false, error: { category, message, effects: category === 'unknown_outcome' ? 'unknown' : 'none' } })); process.exitCode = 1;
 }
