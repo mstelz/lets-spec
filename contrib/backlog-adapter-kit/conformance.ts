@@ -35,6 +35,10 @@ export async function workflowOutcomes(call: AdapterCall, provider: string): Pro
   assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'In Progress');
   assert.equal((await call('completion.write', { item: child.identity, merge: { reference: 'fake-host/pr/1', merged: true, commit: 'merge-sha' } }, 'done')).status, 'Done');
   assert.equal((await call('completion.write', { item: child.identity, merge: { reference: 'fake-host/pr/1', merged: true, commit: 'merge-sha' } }, 'done-again')).status, 'Done');
+  assert.equal((await call('claim.read', { item: child.identity })).claim.status, 'Done', 'claim read must reflect current item status');
+  assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Done', 'claim read cannot reopen completed work');
+  await assert.rejects(call('claim.release', { item: child.identity, token: claim.token }, 'release-done'), /conflict/);
+  assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Done');
 }
 export async function runProfile(provider: string, fault?: string): Promise<true> {
   mkdirSync('.workspace', { recursive: true });

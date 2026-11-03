@@ -66,11 +66,16 @@ try {
         const record = find(input.item); const id = identityKey(input.item);
         const claims = new Claims('best-effort');
         if (state.claims[id]) claims.state = state.claims[id];
+        claims.state.status = normalized(record).metadata.Status;
+        if (operation !== 'claim.read' && claims.state.status === 'Done') throw new Error('conflict: completed item cannot be claimed or released');
         if (operation === 'claim.acquire') result = { claim: claims.acquire(context.actor, context.session, mutationId) };
         else if (operation === 'claim.release') result = { released: claims.release(context.actor, context.session, input.token) };
         else result = { claim: claims.read() };
-        state.claims[id] = claims.read(); record.item.owners = claims.state.actor ? [claims.state.actor] : [];
-        record.data = updateMapped(record.data, { Status: claims.state.status }, mappings); break;
+        if (operation !== 'claim.read') {
+          state.claims[id] = claims.read(); record.item.owners = claims.state.actor ? [claims.state.actor] : [];
+          record.data = updateMapped(record.data, { Status: claims.state.status }, mappings);
+        }
+        break;
       }
       case 'reference.write': { const record = find(input.item); record.reference = input.reference; result = { reference: input.reference }; break; }
       case 'completion.write': {
@@ -85,7 +90,7 @@ try {
       default: throw new Error('unsupported: operation');
     }
     if (mutationId) state.journal[key] = { fingerprint, result };
-    writeFileSync(path, JSON.stringify(state));
+    if (mutationId) writeFileSync(path, JSON.stringify(state));
   }
   process.stdout.write(JSON.stringify({ protocol: 1, ok: true, result }));
 } catch (error) {
