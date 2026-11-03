@@ -1,5 +1,4 @@
 import type { Identity } from './protocol.ts';
-import { identityKey } from './items.ts';
 import type { Item } from './items.ts';
 export type Capability = { support: 'native' | 'emulated' | 'unsupported'; limits: string; guarantee?: 'atomic' | 'best-effort' };
 export type Capabilities = Record<string, Capability>;
@@ -36,23 +35,4 @@ function compareText(left: string, right: string): number {
   const b = Array.from(right, character => character.codePointAt(0)!);
   for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
   return a.length - b.length;
-}
-/** Reference simulation of directed relationships, not a provider implementation. */
-export class Relationships {
-  capabilities: Capabilities;
-  constructor(capabilities: Capabilities) { this.capabilities = capabilities; }
-  edges: { item: Identity; target: Identity; kind: string }[] = [];
-  write(item: Identity, target: Identity, kind: string, present: boolean): void {
-    requireCapability(this.capabilities, ['child', 'parent'].includes(kind) ? 'hierarchy' : 'blockers');
-    if (!['child', 'parent', 'blocked_by', 'related'].includes(kind)) throw new Error('invalid relationship kind');
-    if (kind === 'parent') { [item, target] = [target, item]; kind = 'child'; }
-    const matches = (edge: { item: Identity; target: Identity; kind: string }) => identityKey(edge.item) === identityKey(item) && identityKey(edge.target) === identityKey(target) && edge.kind === kind;
-    this.edges = this.edges.filter(edge => !matches(edge));
-    if (present) this.edges.push({ item, target, kind });
-  }
-  list(item: Identity, kind: string): Identity[] {
-    requireCapability(this.capabilities, ['child', 'parent'].includes(kind) ? 'hierarchy' : 'blockers');
-    if (kind === 'parent') return this.edges.filter(edge => edge.kind === 'child' && identityKey(edge.target) === identityKey(item)).map(edge => edge.item);
-    return this.edges.filter(edge => edge.kind === kind && identityKey(edge.item) === identityKey(item)).map(edge => edge.target);
-  }
 }

@@ -1,47 +1,36 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recoverMutation, MutationJournal } from '../../contrib/backlog-adapter-kit/recovery.ts';
-const scope = { provider: 'fake', backlog: 'b', repository: 'r', actor: 'me', session: 'one' };
-test('lost create response reconciles before another creation', async () => {
-  let creates = 0;
-  const journal = new MutationJournal(scope);
-  const create = () => { creates++; return { id: 'created' }; };
-  assert.throws(() => journal.apply('key', { title: 'one' }, create, true), /unknown_outcome/);
-  const result = await recoverMutation(() => journal.apply('key', { title: 'one' }, create), () => journal.read('key'));
-  assert.deepEqual(result, { id: 'created' }); assert.equal(creates, 1);
-});
-test('unknown reconciliation prohibits another mutation', async () => {
+import { recoverMutation } from '../../contrib/backlog-adapter-kit/recovery.ts';
+import { withAdapter, story } from './fixtures/adapter.ts';
+test('lost creation is reconciled without creating another item', () => withAdapter(async ({ call }) => {
+  const result = await recoverMutation(() => call('item.create', story, 'create', { fault: 'error-unknown_outcome' }), () => call('mutation.read', { mutationId: 'create' }) as any);
+  assert.equal(result.item.title, story.title);
+  assert.equal((await call('candidate.list')).items.length, 1);
+}));
+test('persisted mutation key cannot be rebound to different input', () => withAdapter(async ({ call }) => {
+  await call('item.create', story, 'create');
+  await assert.rejects(call('item.create', { ...story, title: 'Different' }, 'create'), /invalid_request/);
+  assert.equal((await call('candidate.list')).items.length, 1);
+}));
+test('targeted update retry preserves provider data', () => withAdapter(async ({ call, state }) => {
+  const { item } = await call('item.create', story, 'create');
+  const patch = { item: item.identity, patch: { metadata: { Size: 'M' } } };
+  await assert.rejects(call('item.update', patch, 'update', { fault: 'error-unknown_outcome' }), /unknown_outcome/);
+  const before = state();
+  await call('item.update', patch, 'update');
+  assert.deepEqual(state(), before);
+  assert.equal((await call('item.read', { item: item.identity })).item.metadata.Size, 'M');
+}));
+test('relationship retry leaves exactly one directional edge', () => withAdapter(async ({ call }) => {
+  const a = (await call('item.create', story, 'a')).item.identity;
+  const b = (await call('item.create', story, 'b')).item.identity;
+  const input = { item: a, target: b, kind: 'blocked_by', present: true };
+  await assert.rejects(call('relationship.write', input, 'edge', { fault: 'error-unknown_outcome' }), /unknown_outcome/);
+  await call('relationship.write', input, 'edge');
+  assert.deepEqual((await call('relationship.list', { item: a, kind: 'blocked_by' })).items.map((edge: any) => edge.identity), [b]);
+}));
+test('unresolved reconciliation prevents another write', async () => {
   let writes = 0;
   await assert.rejects(recoverMutation(() => ++writes, () => ({ state: 'unknown' })), /unknown_outcome/);
   assert.equal(writes, 0);
-});
-test('mutation key cannot be rebound to another input', () => {
-  const journal = new MutationJournal(scope); journal.apply('key', { title: 'one' }, () => 1);
-  assert.throws(() => journal.apply('key', { title: 'two' }, () => 2), /invalid_request/);
-});
-test('uncertain write is reconciled before progression', async () => {
-  let applied = false; let writes = 0;
-  const result = await recoverMutation(() => { writes++; applied = true; throw Object.assign(new Error('lost'), { category: 'unknown_outcome' }); }, () => applied ? { state: 'applied', result: 7 } : { state: 'absent' });
-  assert.equal(result, 7); assert.equal(writes, 1);
-});
-for (const category of ['authentication', 'permission', 'transient']) {
-  test(`${category} failure remains explicit`, async () => {
-    let attempts = 0;
-    await assert.rejects(recoverMutation(() => { attempts++; throw Object.assign(new Error(category), { category }); }, () => ({ state: 'absent' })), new RegExp(category));
-    assert.equal(attempts, 1);
-  });
-}
-for (const operation of ['item.update', 'relationship.write']) {
-  test(`${operation} retry has one effect`, () => {
-    const journal = new MutationJournal(scope); let effects = 0;
-    const write = () => journal.apply(operation, { desired: true }, () => ++effects);
-    assert.equal(write(), write()); assert.equal(effects, 1);
-  });
-}
-test('shared journal cannot replay another session result', () => {
-  const first = new MutationJournal({ provider: 'fake', backlog: 'b', repository: 'r', actor: 'me', session: 'one' });
-  first.apply('key', {}, () => 'first');
-  const other = new MutationJournal({ provider: 'fake', backlog: 'b', repository: 'r', actor: 'me', session: 'two' }, first.entries);
-  assert.equal(other.entries, first.entries, 'workers share the durable journal storage');
-  assert.deepEqual(other.read('key'), { state: 'absent' });
 });

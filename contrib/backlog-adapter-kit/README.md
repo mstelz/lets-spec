@@ -37,8 +37,10 @@ supply a scoped disposable context and their own cleanup.
 `fake.ts` is an executable simulation driven through stdin/stdout. It keeps a
 local JSON journal only for these sequential scenarios. Its crash consistency,
 locking and simplified provider storage do not implement a provider guarantee.
-The standalone state machines make failure outcomes easy to exercise; neither
-those models nor the fake profile labels prove live provider support.
+The executable is the single source of provider-side behavior. Claims,
+completion, relationships and replay failures are checked through stdin/stdout.
+`recovery.ts` is a small caller example, not another provider journal. The fake
+profile labels do not prove live provider support.
 
 Every production adapter still needs automated checks against its actual
 translation, safe retry/reconciliation and credential handling, followed by a

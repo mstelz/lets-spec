@@ -249,15 +249,15 @@ recovery for manual reconciliation. Never remove another worker's ownership.
 
 Best-effort verification is a snapshot, not exclusive execution: another worker
 may race after verification. Do not advertise atomic guarantees for a sequence
-of assignment and status writes. The synchronous reference state machine tests
+of assignment and status writes. The executable fake tests best-effort
 outcomes; a production atomic profile requires evidence of a provider primitive
 that enforces the declared ownership condition under concurrent attempts.
 
 ## Completion evidence
 
 The caller confirms merge through its code-host integration for the associated
-PR reference, then passes that evidence to completion.write. The kit substitutes
-this external boundary with a fake code host. Evidence includes the exact
+PR reference, then passes that evidence to completion.write. The executable scenarios substitute
+this external boundary with caller-supplied fake merge evidence. Evidence includes the exact
 reference, merged=true and a nonempty merge commit. A provider issue body or
 PR-ready notification is not evidence. Adapters accept this evidence only from
 the trusted caller; the protocol is not an authentication mechanism.

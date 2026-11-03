@@ -1,31 +1,27 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { complete } from '../../contrib/backlog-adapter-kit/completion.ts';
-const merged = { reference: 'host/repo/pull/1', merged: true, commit: 'merge-sha' };
-test('ready unmerged PR leaves work In Progress', async () => {
-  const item = { status: 'In Progress', completionEffects: 0 };
-  await assert.rejects(complete(item, merged.reference, async () => ({ ...merged, merged: false })), /unmerged/);
-  assert.equal(item.status, 'In Progress');
-});
-test('provider automation already completed work is idempotent', async () => {
-  const item = { status: 'Done', completionEffects: 0 };
-  assert.equal(await complete(item, merged.reference, async () => merged), 'Done');
-  assert.equal(item.completionEffects, 0);
-});
-test('lost completion response can be retried without duplicate effects', async () => {
-  const item = { status: 'In Progress', completionEffects: 0 };
-  await assert.rejects(complete(item, merged.reference, async () => merged, true), /unknown_outcome/);
-  assert.equal(await complete(item, merged.reference, async () => merged), 'Done');
-  assert.equal(item.completionEffects, 1);
-});
-for (const [reference, evidence] of [
-  [undefined, { merged: true, commit: 'x' }],
-  ['host/pr/1', { reference: 'host/pr/1', merged: 'no', commit: 'x' }],
-  ['host/pr/1', { reference: 'host/pr/1', merged: true, commit: 1 }],
-] as const) {
-  test(`completion rejects malformed evidence ${JSON.stringify(evidence)}`, async () => {
-    const item = { status: 'In Progress', completionEffects: 0 };
-    await assert.rejects(complete(item, reference as any, async () => evidence as any));
-    assert.equal(item.status, 'In Progress');
-  });
+import { withAdapter, story } from './fixtures/adapter.ts';
+const merge = { reference: 'host/pr/1', merged: true, commit: 'merge-sha' };
+test('unmerged reference cannot complete an item', () => withAdapter(async ({ call }) => {
+  const item = (await call('item.create', story, 'create')).item.identity;
+  await call('claim.acquire', { item }, 'claim');
+  await call('reference.write', { item, reference: merge.reference }, 'reference');
+  await assert.rejects(call('completion.write', { item, merge: { ...merge, merged: false } }, 'done'), /unmerged/);
+  assert.equal((await call('item.read', { item })).item.metadata.Status, 'In Progress');
+}));
+test('lost completion response is retried without duplicate effects', () => withAdapter(async ({ call, state }) => {
+  const item = (await call('item.create', story, 'create')).item.identity;
+  await call('reference.write', { item, reference: merge.reference }, 'reference');
+  await assert.rejects(call('completion.write', { item, merge }, 'done', { fault: 'error-unknown_outcome' }), /unknown_outcome/);
+  await call('completion.write', { item, merge }, 'done');
+  await call('completion.write', { item, merge }, 'already-done');
+  assert.equal((await call('item.read', { item })).item.metadata.Status, 'Done');
+  assert.equal(Object.values(state().items).reduce((sum, entry: any) => sum + (entry.completionEffects ?? 0), 0), 1);
+}));
+for (const evidence of [{ merged: true, commit: 'x' }, { ...merge, merged: 'no' }, { ...merge, commit: 1 }]) {
+  test(`completion rejects malformed merge ${JSON.stringify(evidence)}`, () => withAdapter(async ({ call }) => {
+    const item = (await call('item.create', story, 'create')).item.identity;
+    await assert.rejects(call('completion.write', { item, merge: evidence }, 'done'));
+    assert.equal((await call('item.read', { item })).item.metadata.Status, 'Todo');
+  }));
 }

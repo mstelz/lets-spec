@@ -1,32 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Claims } from '../../contrib/backlog-adapter-kit/claims.ts';
-test('existing owner blocks a claim', () => {
-  const claims = new Claims('best-effort');
-  claims.acquire('a', 'session-a', 'token-a');
-  assert.throws(() => claims.acquire('b', 'session-b', 'token-b'), /conflict/);
-  assert.equal(claims.read().actor, 'a');
-});
-for (const guarantee of ['atomic', 'best-effort'] as const) {
-  test(`${guarantee} claim retains session identity`, () => {
-    const claims = new Claims(guarantee);
-    assert.equal(claims.acquire('me', 'one', 'key').guarantee, guarantee);
-    assert.throws(() => claims.acquire('me', 'two', 'other'), /conflict/);
-  });
-}
-test('release cannot remove another session ownership', () => {
-  const claims = new Claims('best-effort'); claims.acquire('me', 'one', 'key');
-  assert.throws(() => claims.release('me', 'two', 'key'), /conflict/);
-  assert.equal(claims.read().session, 'one');
-});
-test('lost claim response requires reconciliation', () => {
-  const claims = new Claims('best-effort');
-  assert.throws(() => claims.acquire('me', 'one', 'key', 'lost'), /unknown_outcome/);
-  assert.equal(claims.reconcile('me', 'one', 'key'), true);
-});
-test('partial claim cannot authorize build', () => {
-  const claims = new Claims('best-effort');
-  assert.throws(() => claims.acquire('me', 'one', 'key', 'status'), /partial/);
-  assert.equal(claims.reconcile('me', 'one', 'key'), false);
-  assert.equal(claims.read().actor, 'me');
-});
+import { withAdapter, story } from './fixtures/adapter.ts';
+test('lost acquire is reconciled against current ownership', () => withAdapter(async ({ call }) => {
+  const item = (await call('item.create', story, 'create')).item.identity;
+  await assert.rejects(call('claim.acquire', { item }, 'claim', { fault: 'error-unknown_outcome' }), /unknown_outcome/);
+  assert.equal((await call('mutation.read', { mutationId: 'claim' })).state, 'applied');
+  const { claim } = await call('claim.read', { item });
+  assert.equal(claim.session, 'worker'); assert.equal(claim.status, 'In Progress');
+  await assert.rejects(call('claim.acquire', { item }, 'other', { context: { session: 'other' } }), /conflict/);
+}));
+test('another session cannot release a partial claim', () => withAdapter(async ({ call }) => {
+  const item = (await call('item.create', story, 'create')).item.identity;
+  await assert.rejects(call('claim.acquire', { item }, 'claim', { fault: 'partial-claim' }), (error: any) => error.category === 'unknown_outcome' && error.effects === 'partial');
+  assert.equal((await call('mutation.read', { mutationId: 'claim' })).state, 'unknown');
+  const { claim } = await call('claim.read', { item });
+  assert.equal(claim.status, 'Todo'); assert.equal(claim.session, 'worker');
+  await assert.rejects(call('claim.release', { item, token: claim.token }, 'release', { context: { session: 'other' } }), /conflict/);
+  assert.equal((await call('claim.release', { item, token: claim.token }, 'release-own')).released, true);
+}));
