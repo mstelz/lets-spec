@@ -26,6 +26,8 @@ https://github.com/sidereal-io/lets-spec/issues/135
 | D14 | What makes this chore's validation sufficient? | Inventory current GitHub behavior; define request/response schemas and operation semantics; exercise fake executables with representative scenarios for all four providers, failures and retries; document each scenario's primary-source evidence and limits. Fakes validate the contract, not live provider support. | User |
 | D15 | Does this chore change the production workflow? | Deliver the contract, rationale, schemas and reusable fake-based conformance harness; document the future `lets backlog` boundary, but leave the production dispatcher, provider adapters and skill migration to implementation stories. | User |
 
+| D16 | How should the reviewed kit be simplified? | Use one persistent fake as the behavioral source of truth; test failures through its executable boundary, show provider variations explicitly, and keep one release smoke check. Discovery and creation work before backlog selection, scoped reads stay within the selected repository/backlog, and mapping reads enforce declared cardinality. | User: approved Astra review recommendations |
+
 ## Changes from the story
 
 None.

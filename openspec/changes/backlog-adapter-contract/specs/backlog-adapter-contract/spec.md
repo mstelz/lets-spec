@@ -13,7 +13,7 @@ This change SHALL deliver a documented contract, machine-checkable request/respo
 - **AND** the existing production workflow continues to use its existing GitHub commands
 
 ### Requirement: Executable boundary separates responsibilities
-The contract SHALL define versioned JSON requests on stdin and responses on stdout for executable backlog adapters, with diagnostic stderr, supported operations, invocation context, protocol compatibility, process exit behavior and timeout handling. It SHALL assign workflow policy to the shared caller, provider translation to adapters and branch/pull request operations to the code host.
+The contract SHALL define versioned JSON requests on stdin and responses on stdout for executable backlog adapters, with diagnostic stderr, supported operations, operation-specific invocation context, protocol compatibility, process exit behavior and timeout handling. It SHALL assign workflow policy to the shared caller, provider translation to adapters and branch/pull request operations to the code host.
 
 #### Scenario: Fake adapter handles a request
 - **WHEN** the harness invokes a fake adapter with a supported protocol and operation
@@ -128,3 +128,18 @@ The delivered contract SHALL include a traceable behavior inventory, rationale f
 #### Scenario: Fake violates a required guarantee
 - **WHEN** a deliberately broken fixture silently ignores a blocker or duplicates a retried creation
 - **THEN** conformance fails with the violated outcome identified
+
+### Requirement: Discovery establishes backlog selection
+Backlog discovery and creation SHALL accept repository/provider context without an already selected backlog. Other item operations SHALL require a selected backlog and SHALL confine reads and enumeration to its provider, backlog and repository scope.
+
+#### Scenario: No backlog selected yet
+- **WHEN** a caller lists or creates backlogs without a backlog identity
+- **THEN** the operation returns discovered or created backlog identities that can establish selection
+
+#### Scenario: Another scope shares local storage
+- **WHEN** another repository or backlog uses the same fake storage directory
+- **THEN** item reads and enumeration do not expose items outside the selected scope
+
+#### Scenario: Stored mapping cardinality is wrong
+- **WHEN** a stored metadata field has a scalar value for a many-value mapping or an array for a scalar mapping
+- **THEN** reading it reports an actionable configuration error
