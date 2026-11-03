@@ -146,7 +146,9 @@ an identity. Shared metadata is exactly Kind, Priority, Size and Status, using
 the values in `METADATA` in the kit. There is no generic provider-field input.
 
 Mappings associate each shared value with an adapter-local field/value pair.
-Each pair must have one meaning. Reads reject missing or ambiguous values.
+Each pair must have one meaning. Each mapping declares cardinality one (scalar)
+or many (label array). A scalar field cannot hold two shared meanings; a shared
+array uses disjoint value sets and initializes as an array even when absent. Reads reject missing or ambiguous values.
 The reference mapping simulator accepts scalar fields and label arrays. Updates
 remove only the old values owned by the changed mapping; other labels and fields
 remain. Production adapters must validate provider field types and permitted

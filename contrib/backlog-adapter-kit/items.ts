@@ -14,13 +14,16 @@ export function validateItem(value: unknown): asserts value is Item {
   for (const key of Object.keys(metadata)) if (!(key in METADATA)) throw new Error(`unknown metadata.${key}`);
 }
 export function identityKey(identity: Identity): string { validateIdentity(identity); return JSON.stringify([identity.provider, identity.backlog, identity.id]); }
-export type Mappings = Record<string, { field: string; values: Record<string, string> }>;
+export type Mappings = Record<string, { field: string; cardinality: 'one' | 'many'; values: Record<string, string> }>;
 export function validateMappings(mappings: Mappings): void {
   object(mappings, 'invalid_configuration: mappings');
   const used = new Set<string>();
+  const storage = new Map<string, string>();
   for (const [field, values] of Object.entries(METADATA)) {
     const mapping = mappings[field];
     if (!mapping || typeof mapping.field !== 'string' || !mapping.field) throw new Error(`invalid_configuration: mapping ${field} missing field`);
+    if (!['one', 'many'].includes(mapping.cardinality) || (storage.has(mapping.field) && (mapping.cardinality !== 'many' || storage.get(mapping.field) !== 'many'))) throw new Error(`invalid_configuration: conflicting cardinality for ${mapping.field}`);
+    storage.set(mapping.field, mapping.cardinality);
     for (const value of values) {
       const stored = mapping.values?.[value];
       if (typeof stored !== 'string' || !stored) throw new Error(`invalid_configuration: mapping ${field}.${value} missing`);
@@ -37,8 +40,9 @@ export function updateMapped(data: Record<string, unknown>, patch: Partial<Metad
     if (!(field in METADATA) || !(METADATA[field as keyof Metadata] as readonly unknown[]).includes(value)) throw new Error(`invalid shared metadata ${field}`);
     const mapping = mappings[field];
     const previous = result[mapping.field];
-    result[mapping.field] = Array.isArray(previous)
-      ? [...previous.filter(entry => !Object.values(mapping.values).includes(entry)), mapping.values[value!]]
+    if (previous !== undefined && (mapping.cardinality === 'many' ? !Array.isArray(previous) : typeof previous !== 'string')) throw new Error(`invalid_configuration: storage cardinality for ${mapping.field}`);
+    result[mapping.field] = mapping.cardinality === 'many'
+      ? [...((previous ?? []) as string[]).filter(entry => !Object.values(mapping.values).includes(entry)), mapping.values[value!]]
       : mapping.values[value!];
   }
   return result;

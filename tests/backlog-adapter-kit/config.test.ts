@@ -13,7 +13,7 @@ for (const [name, document, finder] of [
   test(`invalid selection rejects ${name}`, () => assert.throws(() => checkConfiguration(document, process.cwd(), finder), /config/));
 }
 import { METADATA } from '../../contrib/backlog-adapter-kit/items.ts';
-const mappings = Object.fromEntries(Object.entries(METADATA).map(([field, values]) => [field, { field, values: Object.fromEntries(values.map(value => [value, value])) }]));
+const mappings = Object.fromEntries(Object.entries(METADATA).map(([field, values]) => [field, { field, cardinality: 'one' as const, values: Object.fromEntries(values.map(value => [value, value])) }]));
 const local = { lets: { backlog: { provider: 'beads', executable: './bin/local', id: 'local', mappings, storage: { path: '.beads', tracking: 'ignored' } } } };
 test('local selection resolves executable relative to repository', () => {
   let searched = '';
