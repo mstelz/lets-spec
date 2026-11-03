@@ -1,3 +1,4 @@
+import { AdapterFailure } from './errors.ts';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -63,7 +64,7 @@ export async function runProfile(provider: string, fault?: string): Promise<true
   const context = { cwd, provider, backlog: 'acceptance', repository: 'fixture', actor: 'me', session: 'worker' };
   const call: AdapterCall = async (operation, input, mutationId, worker) => {
     const response = await invoke(process.execPath, { protocol: 1, operation, context: { ...context, ...worker }, input, ...(mutationId ? { mutationId } : {}) }, { args: [fileURLToPath(new URL('./fake.ts', import.meta.url)), ...(fault ? [fault] : [])] });
-    if (!response.ok) throw new Error(`${response.error.category}: ${response.error.message}`);
+    if (!response.ok) throw new AdapterFailure(response.error.category, response.error.effects, response.error.message);
     return response.result;
   };
   try { await workflowOutcomes(call, provider, { actor: context.actor, session: context.session, inspectUnrelated: async identity => {

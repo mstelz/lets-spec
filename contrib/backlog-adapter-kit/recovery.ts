@@ -1,3 +1,4 @@
+import { AdapterFailure } from './errors.ts';
 /** Reference mutation journal. A real adapter must durably bind keys to scoped
  * operation/input and reconcile the provider, not rely on this in-memory map. */
 export type Reconciled<T> = { state: 'applied'; result: T } | { state: 'absent' | 'unknown' };
@@ -18,7 +19,7 @@ export class MutationJournal {
     }
     const result = effect();
     this.entries.set(key, { input: JSON.stringify(input), result: structuredClone(result) });
-    if (loseResponse) throw new Error('unknown_outcome: response lost');
+    if (loseResponse) throw new AdapterFailure('unknown_outcome', 'unknown', 'response lost');
     return result;
   }
   read<T>(key: string): Reconciled<T> {
@@ -29,12 +30,12 @@ export class MutationJournal {
 export async function recoverMutation<T>(apply: () => T | Promise<T>, reconcile: () => Reconciled<T> | Promise<Reconciled<T>>): Promise<T> {
   const state = await reconcile();
   if (state.state === 'applied') return state.result;
-  if (state.state !== 'absent') throw new Error('unknown_outcome: reconciliation required');
+  if (state.state !== 'absent') throw new AdapterFailure('unknown_outcome', 'unknown', 'reconciliation required');
   try { return await apply(); }
   catch (error) {
     if ((error as { category?: string }).category !== 'unknown_outcome') throw error;
     const after = await reconcile();
     if (after.state === 'applied') return after.result;
-    throw new Error('unknown_outcome: reconcile before retry');
+    throw new AdapterFailure('unknown_outcome', 'unknown', 'reconcile before retry');
   }
 }

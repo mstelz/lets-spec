@@ -35,3 +35,9 @@ for (const category of ['authentication', 'permission', 'transient', 'unknown_ou
 test('signal termination rejects even a valid failure envelope', async () => {
   await assert.rejects(invoke(process.execPath, request, { args: [fixture, 'signal'] }), /signal/);
 });
+import { recoverMutation } from '../../contrib/backlog-adapter-kit/recovery.ts';
+test('transport timeout reaches mutation reconciliation', async () => {
+  let reads = 0;
+  const result = await recoverMutation<unknown>(() => invoke(process.execPath, request, { args: [fixture, 'timeout'], timeoutMs: 100 }), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: 'reconciled' });
+  assert.equal(result, 'reconciled'); assert.equal(reads, 2);
+});

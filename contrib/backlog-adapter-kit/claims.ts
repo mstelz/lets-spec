@@ -1,3 +1,4 @@
+import { AdapterFailure } from './errors.ts';
 /** Reference state machine. Its synchronous implementation is not evidence
  * that a real provider offers atomic claims. */
 export type Claim = { actor: string | null; session: string | null; token: string | null; status: string; guarantee: 'atomic' | 'best-effort' };
@@ -16,8 +17,8 @@ export class Claims {
   acquire(actor: string, session: string, token: string, fault?: 'lost' | 'status'): Claim {
     if (this.state.actor) throw new Error('conflict: existing ownership');
     this.state = { ...this.state, actor, session, token, status: fault === 'status' ? 'Todo' : 'In Progress' };
-    if (fault === 'status') throw new Error('unknown_outcome: partial assignment; reconcile status before build');
-    if (fault === 'lost') throw new Error('unknown_outcome: response lost');
+    if (fault === 'status') throw new AdapterFailure('unknown_outcome', 'partial', 'partial assignment; reconcile status before build');
+    if (fault === 'lost') throw new AdapterFailure('unknown_outcome', 'unknown', 'response lost');
     return this.read();
   }
 }
