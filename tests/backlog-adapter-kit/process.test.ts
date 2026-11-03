@@ -26,9 +26,11 @@ for (const category of ['authentication', 'permission', 'transient', 'unknown_ou
     mkdirSync('.workspace', { recursive: true }); const cwd = mkdtempSync(join(process.cwd(), '.workspace/error-profile-'));
     try {
       const simulated = { protocol: 1, operation: 'item.create', mutationId: 'write', context: { ...request.context, cwd, provider: 'beads' }, input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: 'Todo' } } };
-      const result = await invoke(process.execPath, simulated, { args: [fileURLToPath(new URL('../../contrib/backlog-adapter-kit/fake.ts', import.meta.url)), `error-${category}`] });
-      assert.equal(result.ok, false); assert.equal(result.error.category, category);
-      assert.equal(result.error.effects, category === 'unknown_outcome' ? 'unknown' : 'none');
+      await assert.rejects(invoke(process.execPath, simulated, { args: [fileURLToPath(new URL('../../contrib/backlog-adapter-kit/fake.ts', import.meta.url)), `error-${category}`] }), (error: any) => {
+        assert.equal(error.category, category);
+        assert.equal(error.effects, category === 'unknown_outcome' ? 'unknown' : 'none');
+        return true;
+      });
     } finally { rmSync(cwd, { recursive: true, force: true }); }
   });
 }
@@ -40,4 +42,13 @@ test('transport timeout reaches mutation reconciliation', async () => {
   let reads = 0;
   const result = await recoverMutation<unknown>(() => invoke(process.execPath, request, { args: [fixture, 'timeout'], timeoutMs: 100 }), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: 'reconciled' });
   assert.equal(result, 'reconciled'); assert.equal(reads, 2);
+});
+test('adapter-reported unknown outcome reaches reconciliation', async () => {
+  mkdirSync('.workspace', { recursive: true }); const cwd = mkdtempSync(join(process.cwd(), '.workspace/reconcile-profile-'));
+  try {
+    let reads = 0;
+    const simulated = { protocol: 1, operation: 'item.create', mutationId: 'write', context: { ...request.context, cwd, provider: 'beads' }, input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: 'Todo' } } };
+    const result = await recoverMutation<unknown>(() => invoke(process.execPath, simulated, { args: [fileURLToPath(new URL('../../contrib/backlog-adapter-kit/fake.ts', import.meta.url)), 'error-unknown_outcome'] }), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: 'reconciled' });
+    assert.equal(result, 'reconciled'); assert.equal(reads, 2);
+  } finally { rmSync(cwd, { recursive: true, force: true }); }
 });

@@ -17,7 +17,9 @@ Scratch state lives under `.workspace/` and is removed after each profile.
 
 `protocol.ts` exports required/optional operation definitions and validators.
 `process.ts` exports `invoke(executable, request, options)`; default invocation
-has no shell arguments. Test options permit an interpreter plus fixture path.
+has no shell arguments. Valid provider failures reject with `AdapterFailure`,
+preserving category and effects just like transport failures. This lets
+`recoverMutation` reconcile adapter-reported uncertain writes as well as timeouts. Test options permit an interpreter plus fixture path.
 `conformance.ts` exports `workflowOutcomes(call, provider, evidence)` for a disposable
 acceptance backlog, and `runProfile(provider, fault?)` for offline simulations.
 Evidence names the authenticated actor/session and supplies an adapter-specific

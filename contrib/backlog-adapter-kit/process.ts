@@ -24,7 +24,8 @@ export async function invoke(executable: string, request: Record<string, any>, o
         if (signal || code === null) throw new Error(`contract failure: signal termination ${signal}`);
         const response = JSON.parse(stdout);
         validateResponse(response, code ?? -1, request.operation);
-        resolve(response);
+        if (!response.ok) reject(new AdapterFailure(response.error.category, response.error.effects, response.error.message));
+        else resolve(response);
       } catch (error) { reject(new AdapterFailure('unknown_outcome', 'unknown', `${String(error)}; adapter stderr: ${stderr}`)); }
     });
     child.stdin.on('error', () => {});
