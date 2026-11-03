@@ -1,0 +1,11 @@
+export type MergeEvidence = { reference: string; merged: boolean; commit: string };
+export type CompletionState = { status: string; completionEffects: number };
+/** codeHost is the trusted caller's code-host boundary, never provider item text. */
+export async function complete(item: CompletionState, reference: string, codeHost: () => Promise<MergeEvidence>, loseResponse = false): Promise<string> {
+  const evidence = await codeHost();
+  if (!evidence.merged || evidence.reference !== reference || !evidence.commit) throw new Error('unmerged or mismatched code-host evidence');
+  if (item.status === 'Done') return 'Done';
+  item.status = 'Done'; item.completionEffects++;
+  if (loseResponse) throw new Error('unknown_outcome: completion response lost');
+  return item.status;
+}

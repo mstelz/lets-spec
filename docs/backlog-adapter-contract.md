@@ -235,3 +235,17 @@ may race after verification. Do not advertise atomic guarantees for a sequence
 of assignment and status writes. The synchronous reference state machine tests
 outcomes; a production atomic profile requires evidence of a provider primitive
 that enforces the declared ownership condition under concurrent attempts.
+
+## Completion evidence
+
+The caller confirms merge through its code-host integration for the associated
+PR reference, then passes that evidence to completion.write. The kit substitutes
+this external boundary with a fake code host. Evidence includes the exact
+reference, merged=true and a nonempty merge commit. A provider issue body or
+PR-ready notification is not evidence. Adapters accept this evidence only from
+the trusted caller; the protocol is not an authentication mechanism.
+
+Check merge even when provider automation already set Done. After confirmation,
+already Done is success without another effect. A lost completion response is
+recovered by reading status and retrying the same desired state. Review readiness
+and archive leave In Progress; only confirmed merge permits completion.
