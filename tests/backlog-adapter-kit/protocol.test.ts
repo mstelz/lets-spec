@@ -88,3 +88,9 @@ for (const [operation, result] of [
     assert.throws(() => validateResponse({ protocol: 1, ok: true, result }, 0, operation));
   });
 }
+for (const operation of ['backlog.list', 'backlog.create']) {
+  test(`${operation} accepts context before backlog selection`, () => {
+    const { backlog, ...unselected } = context;
+    assert.doesNotThrow(() => validateRequest({ protocol: 1, operation, context: unselected, input: operation === 'backlog.create' ? { title: 'New backlog' } : {}, ...(operation === 'backlog.create' ? { mutationId: 'create-backlog' } : {}) }));
+  });
+}

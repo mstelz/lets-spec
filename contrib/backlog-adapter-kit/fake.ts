@@ -16,14 +16,14 @@ try {
   if (['error-authentication', 'error-permission', 'error-transient'].includes(fault)) throw new Error(`${fault.slice(6)}: simulated provider failure`);
   if (fault === 'overstate-claim') capabilities.claims.guarantee = 'atomic';
   const path = join(context.cwd, 'simulation.json');
-  const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0 };
+  const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0, backlogs: [] };
   const scope = JSON.stringify([context.provider, context.backlog, context.repository, context.actor, context.session]);
   const key = `${scope}:${mutationId}`;
   const fingerprint = JSON.stringify({ operation, input });
   const find = (identity: any) => {
     if (identity.provider !== context.provider || identity.backlog !== context.backlog) throw new Error('invalid_request: item outside selected scope');
     const found = state.items[identityKey(identity)];
-    if (!found) throw new Error('not_found: item'); return found;
+    if (!found || found.repository !== context.repository) throw new Error('not_found: item'); return found;
   };
   const normalized = (record: any) => ({ ...record.item, metadata: readMapped(record.data, mappings) });
   const verifyClaimReplay = (entry: any) => {
@@ -42,8 +42,12 @@ try {
   } else {
     switch (operation) {
       case 'capability.read': result = { capabilities }; break;
-      case 'backlog.list': result = page([{ provider: context.provider, id: context.backlog }]); break;
-      case 'backlog.create': result = { backlog: context.backlog }; break;
+      case 'backlog.list': result = page(state.backlogs.filter((backlog: any) => backlog.provider === context.provider && backlog.repository === context.repository).map(({ repository, ...backlog }: any) => backlog)); break;
+      case 'backlog.create': {
+        const id = `backlog-${++state.count}`;
+        state.backlogs.push({ id, title: input.title, provider: context.provider, repository: context.repository });
+        result = { backlog: id }; break;
+      }
       case 'backlog.check': result = { valid: true, gaps: [] }; break;
       case 'item.create': {
         const number = ++state.count;
@@ -51,7 +55,7 @@ try {
         const item = { identity, reference: context.provider === 'github' ? `#${number}` : identity.id, title: input.title, body: input.body, metadata: input.metadata, owners: [], ...(context.provider === 'beads' ? {} : { url: `https://example.invalid/items/${number}` }) };
         validateItem(item);
         const data = updateMapped({ ...(context.provider === 'linear' || context.provider === 'beads' ? { labels: ['unrelated'] } : {}), custom: 'preserved' }, input.metadata, mappings);
-        state.items[identityKey(identity)] = { item, data }; result = { item }; break;
+        state.items[identityKey(identity)] = { item, data, repository: context.repository }; result = { item }; break;
       }
       case 'item.read': result = { item: normalized(find(input.item)) }; break;
       case 'item.update': {
@@ -62,7 +66,7 @@ try {
         for (const field of ['title', 'body']) if (input.patch[field] !== undefined) record.item[field] = input.patch[field];
         result = { item: normalized(record) }; validateItem(result.item); break;
       }
-      case 'item.search': case 'candidate.list': result = page(Object.values(state.items).map((record: any) => normalized(record))); break;
+      case 'item.search': case 'candidate.list': result = page(Object.values(state.items).filter((record: any) => record.repository === context.repository && record.item.identity.provider === context.provider && record.item.identity.backlog === context.backlog).map(normalized)); break;
       case 'relationship.write': case 'relationship.list': {
         find(input.item);
         const relationships = new Relationships(capabilities); relationships.edges = state.edges;

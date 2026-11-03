@@ -58,6 +58,11 @@ The contract SHALL define Kind as Epic/Story/Bug/Chore, Priority as Must/Should/
 - **WHEN** configured provider values cannot unambiguously represent a required shared value
 - **THEN** validation reports an actionable configuration error rather than silently choosing a different meaning
 
+
+#### Scenario: Stored mapping cardinality is wrong
+- **WHEN** a stored metadata field has a scalar value for a many-value mapping or an array for a scalar mapping
+- **THEN** reading it reports an actionable configuration error
+
 ### Requirement: Capabilities preserve workflow outcomes
 The contract SHALL declare capabilities as native, emulated or unsupported, including emulation limits and claim guarantees. It SHALL preserve the existing GitHub behavior inventory and report an explicit gap when a current workflow step cannot achieve its required outcome. Conformance SHALL test the declared guarantee rather than infer support from the provider name.
 
@@ -139,7 +144,3 @@ Backlog discovery and creation SHALL accept repository/provider context without 
 #### Scenario: Another scope shares local storage
 - **WHEN** another repository or backlog uses the same fake storage directory
 - **THEN** item reads and enumeration do not expose items outside the selected scope
-
-#### Scenario: Stored mapping cardinality is wrong
-- **WHEN** a stored metadata field has a scalar value for a many-value mapping or an array for a scalar mapping
-- **THEN** reading it reports an actionable configuration error
