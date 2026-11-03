@@ -54,7 +54,8 @@ is a separate process. The caller supplies an absolute repository `cwd` and
 sets the process working directory to it. No adapter may infer another backlog.
 
 Requests contain `protocol: 1`, `operation`, `context`, `input`, and, for a
-mutation, a nonempty `mutationId` reused across retries. Context requires `cwd`,
+mutation, a nonempty `mutationId` reused across retries. Read operations reject that
+envelope field and never journal or replay their results. Context requires `cwd`,
 `provider`, `repository`, `actor` and `session`. Item operations additionally
 require `backlog`; backlog.list and backlog.create must omit it. mutation.read
 also omits it when reconciling a preselection creation; otherwise it uses the

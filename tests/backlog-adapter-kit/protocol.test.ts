@@ -94,3 +94,8 @@ for (const operation of ['backlog.list', 'backlog.create']) {
     assert.doesNotThrow(() => validateRequest({ protocol: 1, operation, context: unselected, input: operation === 'backlog.create' ? { title: 'New backlog' } : {}, ...(operation === 'backlog.create' ? { mutationId: 'create-backlog' } : {}) }));
   });
 }
+for (const [operation, input] of [['claim.read', { item: identity }], ['candidate.list', {}], ['relationship.list', { item: identity, kind: 'blocked_by' }]]) {
+  test(`${operation} rejects a mutation key`, () => {
+    assert.throws(() => validateRequest({ protocol: 1, operation, input, context, mutationId: 'read-key' }), /mutationId.*read/);
+  });
+}

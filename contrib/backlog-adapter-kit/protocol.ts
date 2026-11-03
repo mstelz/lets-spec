@@ -15,6 +15,7 @@ export function validateRequest(value: unknown): void {
   }
   if (discovery && context?.backlog !== undefined) throw new Error('context.backlog must be omitted for discovery/create');
   if (request.operation === 'mutation.read' && context?.backlog !== undefined && (typeof context.backlog !== 'string' || !context.backlog)) throw new Error('context.backlog must be omitted or nonempty');
+  if (!MUTATIONS.includes(request.operation as string) && request.mutationId !== undefined) throw new Error('mutationId is forbidden on reads');
   if (MUTATIONS.includes(request.operation as string) && (typeof request.mutationId !== 'string' || request.mutationId === '')) throw new Error('mutationId is required');
   if (request.operation === 'item.read') validateIdentity((request.input as Record<string, unknown>)?.item);
   fields(request.input, INPUTS[request.operation as string], 'input');
