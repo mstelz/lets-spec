@@ -13,6 +13,7 @@ try {
   const { context, input, operation, mutationId } = request;
   const { capabilities, mappings } = profile(context.provider);
   const fault = process.argv[2];
+  if (fault === 'overstate-claim') capabilities.claims.guarantee = 'atomic';
   const path = join(context.cwd, 'simulation.json');
   const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0 };
   const scope = JSON.stringify([context.provider, context.backlog, context.repository, context.actor, context.session]);
@@ -47,6 +48,7 @@ try {
       case 'item.update': {
         const record = find(input.item);
         for (const field of Object.keys(input.patch)) if (!['title', 'body', 'metadata'].includes(field)) throw new Error('invalid_request: unknown patch field');
+        if (fault === 'erase-unrelated') delete record.data.custom;
         if (input.patch.metadata) record.data = updateMapped(record.data, input.patch.metadata, mappings);
         for (const field of ['title', 'body']) if (input.patch[field] !== undefined) record.item[field] = input.patch[field];
         result = { item: normalized(record) }; validateItem(result.item); break;
@@ -68,6 +70,7 @@ try {
         if (state.claims[id]) claims.state = state.claims[id];
         claims.state.status = normalized(record).metadata.Status;
         if (operation !== 'claim.read' && claims.state.status === 'Done') throw new Error('conflict: completed item cannot be claimed or released');
+        if (fault === 'overwrite-owner' && operation === 'claim.acquire') claims.state.actor = null;
         if (operation === 'claim.acquire') result = { claim: claims.acquire(context.actor, context.session, mutationId) };
         else if (operation === 'claim.release') result = { released: claims.release(context.actor, context.session, input.token) };
         else result = { claim: claims.read() };

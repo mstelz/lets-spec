@@ -36,3 +36,6 @@ test('unsupported hierarchy prevents any edge write', () => {
   assert.throws(() => links.write(make('p').identity, make('c').identity, 'child', true), /unsupported/);
   assert.deepEqual(links.edges, []);
 });
+test('claim capability requires an explicit guarantee', () => {
+  assert.throws(() => requireCapability({ claims: { support: 'native', limits: '' } }, 'claims'), /guarantee/);
+});

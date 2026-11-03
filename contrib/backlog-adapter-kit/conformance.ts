@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { invoke } from './process.ts';
-import { validateItem } from './items.ts';
+import { validateItem, identityKey } from './items.ts';
 import { requireCapability } from './capabilities.ts';
 export type AdapterCall = (operation: string, input: Record<string, unknown>, mutationId?: string, worker?: { actor: string; session: string }) => Promise<Record<string, any>>;
 /** Reusable workflow checks. Call only against a disposable acceptance backlog. */
-export async function workflowOutcomes(call: AdapterCall, provider: string): Promise<void> {
+export async function workflowOutcomes(call: AdapterCall, provider: string, evidence: { actor: string; session: string; inspectUnrelated: (identity: any) => Promise<unknown> }): Promise<void> {
   const caps = (await call('capability.read', {})).capabilities;
   for (const name of ['hierarchy', 'blockers', 'claims', 'metadata', 'references', 'completion']) requireCapability(caps, name);
   const metadata = { Kind: 'Story', Priority: 'Must', Size: 'S', Status: 'Todo' };
@@ -18,8 +18,10 @@ export async function workflowOutcomes(call: AdapterCall, provider: string): Pro
   const child = (await call('item.create', { title: 'Contract child', body: '', metadata }, 'create-child')).item;
   validateItem(child);
   if (provider === 'beads') assert.equal(child.url, undefined, 'local item must work without URL');
+  const unrelated = await evidence.inspectUnrelated(child.identity);
   const updated = (await call('item.update', { item: child.identity, patch: { metadata: { Size: 'M' } } }, 'update')).item;
   assert.deepEqual(updated.metadata, { ...metadata, Size: 'M' });
+  assert.deepEqual(await evidence.inspectUnrelated(child.identity), unrelated, 'unrelated provider data must survive targeted update');
   await call('relationship.write', { item: first.identity, target: child.identity, kind: 'child', present: true }, 'parent');
   assert.deepEqual((await call('relationship.list', { item: child.identity, kind: 'parent' })).items.map((edge: any) => edge.identity), [first.identity]);
   await call('relationship.write', { item: child.identity, target: first.identity, kind: 'blocked_by', present: true }, 'block');
@@ -27,10 +29,24 @@ export async function workflowOutcomes(call: AdapterCall, provider: string): Pro
   assert.deepEqual((await call('relationship.list', { item: first.identity, kind: 'blocked_by' })).items, []);
   await call('relationship.write', { item: child.identity, target: first.identity, kind: 'related', present: true }, 'related');
   assert.equal((await call('relationship.list', { item: child.identity, kind: 'blocked_by' })).items.length, 1);
-  const claim = (await call('claim.acquire', { item: child.identity }, 'claim')).claim;
-  assert.equal(claim.status, 'In Progress'); assert.equal(claim.token, 'claim');
-  await assert.rejects(call('claim.acquire', { item: child.identity }, 'claim', { actor: 'me', session: 'other-worker' }), /conflict/, 'another session cannot replay an accepted claim key');
+  let claim = (await call('claim.acquire', { item: child.identity }, 'claim')).claim;
+  assert.equal(claim.status, 'In Progress');
+  assert.equal(claim.guarantee, caps.claims.guarantee, 'declared claim guarantee must match actual result');
+  assert.equal(claim.actor, evidence.actor); assert.equal(claim.session, evidence.session);
+  assert.ok(typeof claim.token === 'string' && claim.token);
+  await assert.rejects(call('claim.acquire', { item: child.identity }, 'claim', { actor: evidence.actor, session: `${evidence.session}-other` }), /conflict/, 'another session cannot replay an accepted claim key');
   assert.deepEqual((await call('claim.read', { item: child.identity })).claim, claim);
+  await assert.rejects(call('claim.release', { item: child.identity, token: claim.token }, 'release-other', { actor: evidence.actor, session: `${evidence.session}-other` }), /conflict/, 'another session cannot release ownership');
+  assert.equal((await call('claim.release', { item: child.identity, token: claim.token }, 'release-own')).released, true);
+  assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Todo');
+  claim = (await call('claim.acquire', { item: child.identity }, 'claim-final')).claim;
+  if (caps.claims.guarantee === 'atomic') {
+    const raced = (await call('item.create', { title: 'Atomic claim race', body: '', metadata }, 'create-race')).item;
+    const results = await Promise.allSettled(['one', 'two'].map(session => call('claim.acquire', { item: raced.identity }, `race-${session}`, { actor: evidence.actor, session: `${evidence.session}-${session}` })));
+    assert.equal(results.filter(result => result.status === 'fulfilled').length, 1, 'atomic claims must have one winner');
+    const rejected = results.find(result => result.status === 'rejected') as PromiseRejectedResult;
+    assert.match(String(rejected.reason), /conflict/);
+  }
   await call('reference.write', { item: child.identity, reference: 'fake-host/pr/1' }, 'ref');
   await assert.rejects(call('completion.write', { item: child.identity, merge: { reference: 'fake-host/pr/1', merged: false, commit: '' } }, 'not-merged'));
   assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'In Progress');
@@ -50,6 +66,10 @@ export async function runProfile(provider: string, fault?: string): Promise<true
     if (!response.ok) throw new Error(`${response.error.category}: ${response.error.message}`);
     return response.result;
   };
-  try { await workflowOutcomes(call, provider); return true; }
+  try { await workflowOutcomes(call, provider, { actor: context.actor, session: context.session, inspectUnrelated: async identity => {
+    const state = JSON.parse(readFileSync(join(cwd, 'simulation.json'), 'utf8'));
+    const data = state.items[identityKey(identity)].data;
+    return { custom: data.custom, labels: Array.isArray(data.labels) ? data.labels.filter((label: string) => !/^(Kind|Priority|Size|Status):/.test(label)) : [] };
+  } }); return true; }
   finally { rmSync(cwd, { recursive: true, force: true }); }
 }

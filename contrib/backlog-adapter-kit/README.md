@@ -18,8 +18,16 @@ Scratch state lives under `.workspace/` and is removed after each profile.
 `protocol.ts` exports required/optional operation definitions and validators.
 `process.ts` exports `invoke(executable, request, options)`; default invocation
 has no shell arguments. Test options permit an interpreter plus fixture path.
-`conformance.ts` exports `workflowOutcomes(call, provider)` for a disposable
+`conformance.ts` exports `workflowOutcomes(call, provider, evidence)` for a disposable
 acceptance backlog, and `runProfile(provider, fault?)` for offline simulations.
+Evidence names the authenticated actor/session and supplies an adapter-specific
+`inspectUnrelated(identity)` callback that snapshots seeded unrelated provider
+data before and after targeted writes. This test-only observation stays outside
+the shared protocol. Supply worker context on calls to test same-account
+session conflicts and release ownership. Atomic declarations additionally run
+competing claims and require one winner; live acceptance must establish the
+underlying primitive, beyond a finite concurrency test.
+
 The call function returns the operation's result or throws its explicit error.
 Never aim the mutating lifecycle at a user's normal backlog. Adapter authors
 supply a scoped disposable context and their own cleanup.

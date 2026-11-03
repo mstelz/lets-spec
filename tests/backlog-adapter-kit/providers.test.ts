@@ -11,3 +11,8 @@ for (const [fault, outcome] of [['duplicate', /duplicate creation/], ['ignore-bl
     await assert.rejects(runProfile('beads', fault), outcome);
   });
 }
+for (const [fault, outcome] of [['overstate-claim', /declared claim guarantee/], ['overwrite-owner', /another session/], ['erase-unrelated', /unrelated provider data/]] as const) {
+  test(`conformance detects ${fault} fixture`, async () => {
+    await assert.rejects(runProfile('beads', fault), outcome);
+  });
+}

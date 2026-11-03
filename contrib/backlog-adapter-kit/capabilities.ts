@@ -7,6 +7,7 @@ export function requireCapability(capabilities: Capabilities, name: string): Cap
   const capability = capabilities[name];
   if (!capability || capability.support === 'unsupported') throw new Error(`unsupported: required capability ${name}`);
   if (!['native', 'emulated'].includes(capability.support) || typeof capability.limits !== 'string' || (capability.support === 'emulated' && !capability.limits)) throw new Error(`invalid capability ${name}`);
+  if (name === 'claims' && !['atomic', 'best-effort'].includes(capability.guarantee as string)) throw new Error('invalid claims guarantee');
   return capability;
 }
 export type Candidate = Item & { repository: string; blockers: { complete: boolean; open: Identity[] } };
