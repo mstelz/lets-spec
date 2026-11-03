@@ -28,3 +28,6 @@ test('local selection requires tracking policy', () => {
   delete bad.lets.backlog.storage.tracking;
   assert.throws(() => checkConfiguration(bad, '/repo', name => name), /tracking/);
 });
+test('validated selection retains backlog scope', () => {
+  assert.equal(checkConfiguration(local, '/repo', name => name).backlog, 'local');
+});

@@ -20,5 +20,5 @@ export function checkConfiguration(document: unknown, cwd: string, findExecutabl
   }
   const executable = findExecutable((selection.executable as string).includes('/') ? resolve(cwd, selection.executable as string) : selection.executable as string);
   if (!executable) throw new Error('invalid_configuration: executable unavailable; no fallback');
-  return { provider: selection.provider as string, executable: executable! };
+  return { provider: selection.provider as string, executable, ...(typeof selection.id === 'string' ? { backlog: selection.id } : {}) };
 }
