@@ -230,8 +230,12 @@ A claim reports actor, session, token, status and guarantee (atomic or
 best-effort). Existing ownership is a conflict, including another session using
 the same account. Acquire checks ownership, assigns, moves to In Progress and
 verifies the result. Only matching ownership and In Progress permit build.
-Lost responses require claim.read/mutation.read reconciliation before another
-acquire. Assignment without the status transition is partial progress and
+Lost responses require mutation reconciliation before another acquire. A journal
+result proves a write happened, not that ownership is still current. Always run
+a fresh claim.read before starting work, including after a successful acquire,
+a replay or mutation.read; require matching actor, session, token and In Progress.
+Acquire replay and claim mutation reconciliation report conflict when the
+original claim has been released, replaced or completed. Assignment without the status transition is partial progress and
 cannot authorize a build. Repair or release only after proving current ownership.
 
 Release requires the original actor, session and token and restores Todo. A

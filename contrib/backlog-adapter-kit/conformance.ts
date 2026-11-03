@@ -40,6 +40,12 @@ export async function workflowOutcomes(call: AdapterCall, provider: string, evid
   await assert.rejects(call('claim.release', { item: child.identity, token: claim.token }, 'release-other', { actor: evidence.actor, session: `${evidence.session}-other` }), /conflict/, 'another session cannot release ownership');
   assert.equal((await call('claim.release', { item: child.identity, token: claim.token }, 'release-own')).released, true);
   assert.equal((await call('item.read', { item: child.identity })).item.metadata.Status, 'Todo');
+  const replacementWorker = { actor: evidence.actor, session: `${evidence.session}-replacement` };
+  const replacement = (await call('claim.acquire', { item: child.identity }, 'claim-replacement', replacementWorker)).claim;
+  await assert.rejects(call('claim.acquire', { item: child.identity }, 'claim'), /conflict/, 'stale acquire replay cannot authorize work');
+  await assert.rejects(call('mutation.read', { mutationId: 'claim' }), /conflict/, 'claim reconciliation must check current ownership');
+  assert.equal((await call('claim.read', { item: child.identity })).claim.session, replacementWorker.session);
+  await call('claim.release', { item: child.identity, token: replacement.token }, 'release-replacement', replacementWorker);
   claim = (await call('claim.acquire', { item: child.identity }, 'claim-final')).claim;
   if (caps.claims.guarantee === 'atomic') {
     const raced = (await call('item.create', { title: 'Atomic claim race', body: '', metadata }, 'create-race')).item;

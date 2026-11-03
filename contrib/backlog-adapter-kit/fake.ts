@@ -26,10 +26,18 @@ try {
     if (!found) throw new Error('not_found: item'); return found;
   };
   const normalized = (record: any) => ({ ...record.item, metadata: readMapped(record.data, mappings) });
+  const verifyClaimReplay = (entry: any) => {
+    const original = JSON.parse(entry.fingerprint);
+    if (original.operation !== 'claim.acquire') return;
+    const record = find(original.input.item);
+    const current = state.claims[identityKey(original.input.item)];
+    if (!current || current.actor !== context.actor || current.session !== context.session || current.token !== entry.result.claim.token || normalized(record).metadata.Status !== 'In Progress') throw new Error('conflict: claim replay no longer has current ownership');
+  };
   const page = (items: unknown[]) => ({ items, complete: true, nextCursor: null });
   let result: any;
   if (mutationId && state.journal[key] && fault !== 'duplicate') {
     if (state.journal[key].fingerprint !== fingerprint) throw new Error('invalid_request: mutation key rebound');
+    verifyClaimReplay(state.journal[key]);
     result = state.journal[key].result;
   } else {
     switch (operation) {
@@ -90,7 +98,7 @@ try {
         record.data = updateMapped(record.data, { Status: completion.status }, mappings);
         record.completionEffects = completion.completionEffects; result = { status: completion.status }; break;
       }
-      case 'mutation.read': { const entry = state.journal[`${scope}:${input.mutationId}`]; result = entry ? { state: 'applied', result: entry.result } : { state: 'absent' }; break; }
+      case 'mutation.read': { const entry = state.journal[`${scope}:${input.mutationId}`]; if (entry) verifyClaimReplay(entry); result = entry ? { state: 'applied', result: entry.result } : { state: 'absent' }; break; }
       default: throw new Error('unsupported: operation');
     }
     if (mutationId) state.journal[key] = { fingerprint, result };
