@@ -48,6 +48,7 @@ export function validateResponse(value: unknown, exitCode: number, operation?: s
       fields(result, OUTPUTS[operation], 'result');
       if (['item.read', 'item.create', 'item.update'].includes(operation)) validateItem(result.item);
       if (['item.search', 'candidate.list'].includes(operation)) for (const item of result.items as unknown[]) validateItem(item);
+      validateNestedResult(operation, result);
       if ('complete' in result && (result.complete === true ? result.nextCursor !== null : typeof result.nextCursor !== 'string' || !result.nextCursor)) throw new Error('invalid pagination completeness/cursor');
     }
     if ('error' in response) throw new Error('successful result cannot contain error');
@@ -114,3 +115,34 @@ export const OUTPUTS: Record<string, Record<string, string>> = {
   'reference.write': { reference: 'text' }, 'completion.write': { status: 'text' },
   'mutation.read': { state: 'text', 'result?': 'object' }, 'capability.read': { capabilities: 'object' },
 };
+
+function oneOf(value: unknown, allowed: readonly unknown[], path: string): void {
+  if (!allowed.includes(value)) throw new Error(`invalid ${path}`);
+}
+function validateNestedResult(operation: string, result: Record<string, unknown>): void {
+  if (operation === 'backlog.list') for (const item of result.items as unknown[]) fields(item, { provider: 'text', id: 'text', 'title?': 'text', 'url?': 'text' }, 'backlog');
+  if (operation === 'relationship.list') for (const item of result.items as unknown[]) {
+    fields(item, { identity: 'identity', status: 'text' }, 'relationship');
+    oneOf((item as Record<string, unknown>).status, METADATA.Status, 'relationship.status');
+  }
+  if (operation === 'claim.read' || operation === 'claim.acquire') {
+    fields(result.claim, { actor: 'nullableText', session: 'nullableText', token: 'nullableText', status: 'text', guarantee: 'text' }, 'claim');
+    const claim = result.claim as Record<string, unknown>;
+    oneOf(claim.status, METADATA.Status, 'claim.status');
+    oneOf(claim.guarantee, ['atomic', 'best-effort'], 'claim.guarantee');
+    if (operation === 'claim.acquire' && (claim.actor === null || claim.session === null || claim.token === null || claim.status !== 'In Progress')) throw new Error('claim.acquire requires verified ownership and In Progress');
+  }
+  if (operation === 'completion.write') oneOf(result.status, ['Done'], 'completion.status');
+  if (operation === 'mutation.read') {
+    oneOf(result.state, ['applied', 'absent', 'unknown'], 'mutation.state');
+    if (result.state === 'applied') object(result.result, 'mutation.result');
+    else if ('result' in result) throw new Error('unresolved mutation cannot include confirmed result');
+  }
+  if (operation === 'capability.read') for (const [name, value] of Object.entries(result.capabilities as Record<string, unknown>)) {
+    fields(value, { support: 'text', limits: 'string', 'guarantee?': 'text' }, `capabilities.${name}`);
+    const capability = value as Record<string, unknown>;
+    oneOf(capability.support, ['native', 'emulated', 'unsupported'], `capabilities.${name}.support`);
+    if (capability.support === 'emulated' && !capability.limits) throw new Error(`capabilities.${name}.limits required`);
+    if (capability.guarantee !== undefined || (name === 'claims' && capability.support !== 'unsupported')) oneOf(capability.guarantee, ['atomic', 'best-effort'], `capabilities.${name}.guarantee`);
+  }
+}

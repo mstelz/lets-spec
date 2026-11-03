@@ -73,3 +73,18 @@ for (const status of ['Done', 'In Progress']) {
 test('completion request requires associated reference', () => {
   assert.throws(() => validateRequest({ protocol: 1, operation: 'completion.write', context, mutationId: 'm', input: { item: identity, merge: { merged: true, commit: 'x' } } }), /reference/);
 });
+for (const [operation, result] of [
+  ['mutation.read', { state: 'done' }],
+  ['mutation.read', { state: 'applied' }],
+  ['relationship.list', { items: [{ identity: {}, status: 'Todo' }], complete: true, nextCursor: null }],
+  ['relationship.list', { items: [{ identity, status: 'open' }], complete: true, nextCursor: null }],
+  ['backlog.list', { items: [{}], complete: true, nextCursor: null }],
+  ['claim.read', { claim: {} }],
+  ['claim.read', { claim: { actor: null, session: null, token: null, status: 'unknown', guarantee: 'exclusive' } }],
+  ['capability.read', { capabilities: { claims: { support: 'native', limits: '' } } }],
+] as const) {
+  test(`response rejects malformed ${operation}: ${JSON.stringify(result)}`, async () => {
+    const { validateResponse } = await import('../../contrib/backlog-adapter-kit/protocol.ts');
+    assert.throws(() => validateResponse({ protocol: 1, ok: true, result }, 0, operation));
+  });
+}
