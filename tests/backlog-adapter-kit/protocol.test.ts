@@ -60,3 +60,13 @@ test('shared update rejects provider field escape hatch', () => {
 test('metadata update rejects unrecognized shared meaning', () => {
   assert.throws(() => validateRequest({ protocol: 1, operation: 'item.update', context, mutationId: 'key', input: { item: identity, patch: { metadata: { Priority: 'Urgent' } } } }), /metadata/);
 });
+for (const status of ['Done', 'In Progress', 'Todo']) {
+  test(`generic update cannot set Status ${status}`, () => {
+    assert.throws(() => validateRequest({ protocol: 1, operation: 'item.update', context, mutationId: 'm', input: { item: identity, patch: { metadata: { Status: status } } } }), /Status.*claim/);
+  });
+}
+for (const status of ['Done', 'In Progress']) {
+  test(`create cannot start at Status ${status}`, () => {
+    assert.throws(() => validateRequest({ protocol: 1, operation: 'item.create', context, mutationId: 'm', input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: status } } }), /Todo/);
+  });
+}

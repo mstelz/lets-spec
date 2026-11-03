@@ -20,6 +20,8 @@ export function validateRequest(value: unknown): void {
   const metadata = request.operation === 'item.create' ? input.metadata : request.operation === 'item.update' ? (input.patch as Record<string, unknown>).metadata : undefined;
   if (metadata !== undefined) {
     const values = object(metadata, 'input.metadata');
+    if (request.operation === 'item.update' && 'Status' in values) throw new Error('Status belongs to claim and completion operations');
+    if (request.operation === 'item.create' && values.Status !== 'Todo') throw new Error('new items must start Todo');
     for (const [field, value] of Object.entries(values)) if (!(field in METADATA) || !(METADATA[field as keyof typeof METADATA] as readonly unknown[]).includes(value)) throw new Error(`invalid input.metadata.${field}`);
     if (request.operation === 'item.create') for (const field of Object.keys(METADATA)) if (!(field in values)) throw new Error(`input.metadata.${field} required`);
   }

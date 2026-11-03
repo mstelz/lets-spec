@@ -215,6 +215,9 @@ scoped identity tuples lexically by code point. The GitHub profile preserves its
 existing same-backlog numeric issue-reference tie-break before the tuple fallback.
 No locale-dependent collation or provider search ordering determines selection.
 
+Generic item creation starts at Todo. Generic item updates cannot write Status;
+claim acquire/release and merge-gated completion own status transitions.
+
 ## Claim guarantees
 
 A claim reports actor, session, token, status and guarantee (atomic or
