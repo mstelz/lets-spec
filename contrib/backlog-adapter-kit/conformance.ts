@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { invoke } from './process.ts';
 import { validateItem } from './items.ts';
 import { requireCapability } from './capabilities.ts';
-export type AdapterCall = (operation: string, input: Record<string, unknown>, mutationId?: string) => Promise<Record<string, any>>;
+export type AdapterCall = (operation: string, input: Record<string, unknown>, mutationId?: string, worker?: { actor: string; session: string }) => Promise<Record<string, any>>;
 /** Reusable workflow checks. Call only against a disposable acceptance backlog. */
 export async function workflowOutcomes(call: AdapterCall, provider: string): Promise<void> {
   const caps = (await call('capability.read', {})).capabilities;
@@ -29,6 +29,7 @@ export async function workflowOutcomes(call: AdapterCall, provider: string): Pro
   assert.equal((await call('relationship.list', { item: child.identity, kind: 'blocked_by' })).items.length, 1);
   const claim = (await call('claim.acquire', { item: child.identity }, 'claim')).claim;
   assert.equal(claim.status, 'In Progress'); assert.equal(claim.token, 'claim');
+  await assert.rejects(call('claim.acquire', { item: child.identity }, 'claim', { actor: 'me', session: 'other-worker' }), /conflict/, 'another session cannot replay an accepted claim key');
   assert.deepEqual((await call('claim.read', { item: child.identity })).claim, claim);
   await call('reference.write', { item: child.identity, reference: 'fake-host/pr/1' }, 'ref');
   await assert.rejects(call('completion.write', { item: child.identity, merge: { reference: 'fake-host/pr/1', merged: false, commit: '' } }, 'not-merged'));
@@ -44,8 +45,8 @@ export async function runProfile(provider: string, fault?: string): Promise<true
   mkdirSync('.workspace', { recursive: true });
   const cwd = mkdtempSync(join(process.cwd(), '.workspace/backlog-conformance-'));
   const context = { cwd, provider, backlog: 'acceptance', repository: 'fixture', actor: 'me', session: 'worker' };
-  const call: AdapterCall = async (operation, input, mutationId) => {
-    const response = await invoke(process.execPath, { protocol: 1, operation, context, input, ...(mutationId ? { mutationId } : {}) }, { args: [fileURLToPath(new URL('./fake.ts', import.meta.url)), ...(fault ? [fault] : [])] });
+  const call: AdapterCall = async (operation, input, mutationId, worker) => {
+    const response = await invoke(process.execPath, { protocol: 1, operation, context: { ...context, ...worker }, input, ...(mutationId ? { mutationId } : {}) }, { args: [fileURLToPath(new URL('./fake.ts', import.meta.url)), ...(fault ? [fault] : [])] });
     if (!response.ok) throw new Error(`${response.error.category}: ${response.error.message}`);
     return response.result;
   };

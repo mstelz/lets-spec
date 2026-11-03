@@ -15,7 +15,7 @@ try {
   const fault = process.argv[2];
   const path = join(context.cwd, 'simulation.json');
   const state: any = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : { items: {}, edges: [], claims: {}, journal: {}, count: 0 };
-  const scope = JSON.stringify([context.provider, context.backlog]);
+  const scope = JSON.stringify([context.provider, context.backlog, context.repository, context.actor, context.session]);
   const key = `${scope}:${mutationId}`;
   const fingerprint = JSON.stringify({ operation, input });
   const find = (identity: any) => {

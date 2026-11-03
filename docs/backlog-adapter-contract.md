@@ -106,7 +106,8 @@ sandbox an adapter: installing its executable is a repository trust decision.
 ## Operation semantics
 
 Every operation is confined to context.repository and context.backlog. Reads
-have no effects. Mutations require a key bound to the operation and exact input;
+have no effects. Mutations require a key scoped to provider, backlog, repository, actor and session, bound to the
+operation and exact input;
 reusing a key with different input is invalid_request.
 
 | Operation | Preconditions and input | Successful result and effects | Recovery |

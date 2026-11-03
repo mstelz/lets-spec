@@ -1,9 +1,16 @@
 /** Reference mutation journal. A real adapter must durably bind keys to scoped
  * operation/input and reconcile the provider, not rely on this in-memory map. */
 export type Reconciled<T> = { state: 'applied'; result: T } | { state: 'absent' | 'unknown' };
+export type MutationScope = { provider: string; backlog: string; repository: string; actor: string; session: string };
 export class MutationJournal {
-  entries = new Map<string, { input: string; result: unknown }>();
+  entries: Map<string, { input: string; result: unknown }>;
+  private prefix: string;
+  constructor(scope: MutationScope, entries = new Map<string, { input: string; result: unknown }>()) {
+    this.prefix = JSON.stringify([scope.provider, scope.backlog, scope.repository, scope.actor, scope.session]);
+    this.entries = entries;
+  }
   apply<T>(key: string, input: unknown, effect: () => T, loseResponse = false): T {
+    key = `${this.prefix}:${key}`;
     const prior = this.entries.get(key);
     if (prior) {
       if (prior.input !== JSON.stringify(input)) throw new Error('invalid_request: mutation key rebound');
@@ -15,7 +22,7 @@ export class MutationJournal {
     return result;
   }
   read<T>(key: string): Reconciled<T> {
-    const entry = this.entries.get(key);
+    const entry = this.entries.get(`${this.prefix}:${key}`);
     return entry ? { state: 'applied', result: structuredClone(entry.result) as T } : { state: 'absent' };
   }
 }
