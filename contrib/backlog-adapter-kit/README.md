@@ -41,7 +41,9 @@ local JSON journal only for these sequential scenarios. Its crash consistency,
 locking and simplified provider storage do not implement a provider guarantee.
 The executable is the single source of provider-side behavior. Claims,
 completion, relationships and replay failures are checked through stdin/stdout.
-`recovery.ts` is a small caller example, not another provider journal. The fake
+`recovery.ts` is a small caller example, not another provider journal. Pass
+the original operation as its third argument; direct and reconciled results
+are validated against that operation before they authorize progression. The fake
 profile labels do not prove live provider support.
 
 Every production adapter still needs automated checks against its actual

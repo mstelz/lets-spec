@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { recoverMutation } from '../../contrib/backlog-adapter-kit/recovery.ts';
 import { withAdapter, story } from './fixtures/adapter.ts';
 test('lost creation is reconciled without creating another item', () => withAdapter(async ({ call }) => {
-  const result = await recoverMutation(() => call('item.create', story, 'create', { fault: 'error-unknown_outcome' }), () => call('mutation.read', { mutationId: 'create' }) as any);
+  const result = await recoverMutation(() => call('item.create', story, 'create', { fault: 'error-unknown_outcome' }), () => call('mutation.read', { mutationId: 'create' }) as any, 'item.create');
   assert.equal(result.item.title, story.title);
   assert.equal((await call('candidate.list')).items.length, 1);
 }));
@@ -31,6 +31,16 @@ test('relationship retry leaves exactly one directional edge', () => withAdapter
 }));
 test('unresolved reconciliation prevents another write', async () => {
   let writes = 0;
-  await assert.rejects(recoverMutation(() => ++writes, () => ({ state: 'unknown' })), /unknown_outcome/);
+  await assert.rejects(recoverMutation(() => ++writes, () => ({ state: 'unknown' }), 'item.create'), /unknown_outcome/);
   assert.equal(writes, 0);
 });
+for (const phase of ['before', 'after']) {
+  test(`recovered creation result is validated ${phase} apply`, async () => {
+    let reads = 0;
+    await assert.rejects(recoverMutation(
+      () => { throw Object.assign(new Error('lost'), { category: 'unknown_outcome' }); },
+      () => ++reads === 1 && phase === 'after' ? { state: 'absent' } : { state: 'applied', result: {} },
+      'item.create',
+    ), /item/);
+  });
+}

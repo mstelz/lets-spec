@@ -40,15 +40,6 @@ test('signal termination rejects even a valid failure envelope', async () => {
 import { recoverMutation } from '../../contrib/backlog-adapter-kit/recovery.ts';
 test('transport timeout reaches mutation reconciliation', async () => {
   let reads = 0;
-  const result = await recoverMutation<unknown>(() => invoke(process.execPath, request, { args: [fixture, 'timeout'], timeoutMs: 100 }), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: 'reconciled' });
-  assert.equal(result, 'reconciled'); assert.equal(reads, 2);
-});
-test('adapter-reported unknown outcome reaches reconciliation', async () => {
-  mkdirSync('.workspace', { recursive: true }); const cwd = mkdtempSync(join(process.cwd(), '.workspace/reconcile-profile-'));
-  try {
-    let reads = 0;
-    const simulated = { protocol: 1, operation: 'item.create', mutationId: 'write', context: { ...request.context, cwd, provider: 'beads' }, input: { title: 'x', body: '', metadata: { Kind: 'Story', Priority: 'Must', Size: 'S', Status: 'Todo' } } };
-    const result = await recoverMutation<unknown>(() => invoke(process.execPath, simulated, { args: [fileURLToPath(new URL('../../contrib/backlog-adapter-kit/fake.ts', import.meta.url)), 'error-unknown_outcome'] }), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: 'reconciled' });
-    assert.equal(result, 'reconciled'); assert.equal(reads, 2);
-  } finally { rmSync(cwd, { recursive: true, force: true }); }
+  const result = await recoverMutation<unknown>(() => invoke(process.execPath, request, { args: [fixture, 'timeout'], timeoutMs: 100 }).then(response => response.result), () => ++reads === 1 ? { state: 'absent' } : { state: 'applied', result: { valid: true, gaps: [] } }, 'backlog.check');
+  assert.deepEqual(result, { valid: true, gaps: [] }); assert.equal(reads, 2);
 });
