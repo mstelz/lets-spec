@@ -6,8 +6,8 @@ load support/common
 
 # The text agents read.
 prose() {
-  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/schemas/*/schema.yaml \
-    "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
+  printf '%s\n' "$repo"/skills/*/SKILL.md "$repo"/skills/*/references/*.md \
+    "$repo"/schemas/*/schema.yaml "$repo"/schemas/*/templates/*.md "$repo"/overlays/AGENTS.md
 }
 
 # mentions <pattern>: each distinct match of the extended regex in the prose.
@@ -119,6 +119,17 @@ flow_texts() {
   done
 }
 
+@test "each flow's brainstorm says comments are evidence" {
+  local flow step
+  for flow in standard minimal; do
+    step="$(awk '/^  - id: brainstorm$/ { on = 1; next } /^  - id: / { on = 0 } on' "$repo/schemas/lets-$flow/schema.yaml" | tr -s '[:space:]' ' ')"
+    grep -qF 'comments are evidence' <<<"$step" ||
+      { echo "the $flow schema's brainstorm step does not say comments are evidence"; false; }
+    grep -qF 'Evidence: #<n> comment (<author>, <date>)' "$repo/schemas/lets-$flow/templates/brainstorm.md" ||
+      { echo "the $flow brainstorm template does not name the comment source"; false; }
+  done
+}
+
 @test "every instruction block is a literal block, so its line breaks survive" {
   local schema
   for schema in "$repo"/schemas/*/schema.yaml; do
@@ -134,12 +145,6 @@ flow_texts() {
   [ "$status" -eq 1 ] || { echo "$output"; false; }
 }
 
-@test "the resolver contract shows contrib/headless-resolver as it is" {
-  local doc="$repo/docs/resolver-contract.md"
-  diff "$repo/contrib/headless-resolver" \
-    <(awk '/^#!\/bin\/sh$/ { show = 1 } /^```$/ { show = 0 } show' "$doc")
-}
-
 @test "the review skills say exit 3 also means no resolver started a session" {
   for skill in lets-review-code lets-review-plan; do
     grep -q '\*\*3\*\*: no fresh session can run here, for example because no resolver started one' \
@@ -153,8 +158,18 @@ flow_texts() {
 }
 
 @test "the docs name lets delegate review or handoff only with instructions or run" {
-  run bash -c "grep -ohE 'lets delegate (review|handoff)( [^ \`]+)?' '$repo/README.md' '$repo/docs/resolver-contract.md' '$repo'/contrib/*/README.md | grep -vE 'lets delegate (review|handoff) (instructions|run)$'"
+  run bash -c "grep -ohE 'lets delegate (review|handoff)( [^ \`]+)?' '$repo/README.md' '$repo'/docs/*.md | grep -vE 'lets delegate (review|handoff) (instructions|run)$'"
   [ "$status" -eq 1 ] || { echo "$output"; false; }
+}
+
+@test "one page describes each resolver, and the README links to each section" {
+  for name in t3 cli subagent; do
+    grep -qx "## \`$name\`" "$repo/docs/resolvers.md" || { echo "no section for $name"; false; }
+    grep -qF "(docs/resolvers.md#$name)" "$repo/README.md" || { echo "no README link to $name"; false; }
+  done
+  grep -qx '### After a t3 update' "$repo/docs/resolvers.md"
+  grep -qF '(docs/resolvers.md#after-a-t3-update)' "$repo/README.md"
+  [ ! -e "$repo/docs/resolvers" ]
 }
 
 @test "the README's warning about #58 is gone" {
@@ -163,12 +178,8 @@ flow_texts() {
 }
 
 @test "the README names where the guidance lives, and --for" {
-  grep -qF 'delegations.<intent>.guidance' "$repo/README.md"
+  grep -qF 'delegate.<strategy>.<intent>.guidance' "$repo/README.md"
   grep -qF -- '--for' "$repo/README.md"
-}
-
-@test "the resolver contract describes the probe's verb" {
-  grep -qE '^\| `verb` \| `probe` \|' "$repo/docs/resolver-contract.md"
 }
 
 # skill_says <skill> <fixed text>: the skill's SKILL.md holds the text,
@@ -183,7 +194,7 @@ skill_says() {
     skill_says "$skill" "lets delegate review instructions --for $intent"
     skill_says "$skill" "lets delegate review run --for $intent"
     skill_says "$skill" "--model <first> --model <second>"
-    skill_says "$skill" "delegations.$intent.guidance"
+    skill_says "$skill" "delegate.review.$intent.guidance"
   done
 }
 
@@ -208,10 +219,14 @@ skill_says() {
 @test "lets-build's handoff asks lets for options, then runs with a ranked list" {
   skill_says lets-build "lets delegate handoff instructions --for apply"
   skill_says lets-build "lets delegate handoff run --for apply"
-  skill_says lets-build "delegations.apply.guidance"
+  skill_says lets-build "delegate.handoff.apply.guidance"
   skill_says lets-build "the guidance first, then the order the options came in"
   skill_says lets-build "When \`options\` is empty, pass your own family"
   skill_says lets-build "If it exits 3, every model was refused: show the user its stderr, and stop."
+}
+
+@test "lets-shape posts its reply with the gh command gh issue comment --body-file" {
+  skill_says lets-shape 'gh issue comment <i> --body-file <file>'
 }
 
 @test "lets-build says a handoff's instructions hold the prompt to carry on by hand" {
@@ -238,6 +253,52 @@ assert_reference_links() {
   assert_reference_links "$repo/skills/lets-shape/SKILL.md" "$repo/skills"
 }
 
+# An anchored link would slip past assert_reference_links, so the link has none.
+@test "shaping links its issue-comments reference" {
+  grep -qF '](references/issue-comments.md)' "$repo/skills/lets-shape/SKILL.md"
+}
+
+@test "build links its issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-build/SKILL.md"
+}
+
+@test "brainstorm links the issue-comments reference" {
+  grep -qF '](../lets-shape/references/issue-comments.md)' "$repo/skills/lets-brainstorm/SKILL.md"
+}
+
+@test "brainstorm states the comment source form" {
+  skill_says lets-brainstorm 'Evidence: #<n> comment (<author>, <date>)'
+}
+
+@test "build links resolve inside the source skills" {
+  assert_reference_links "$repo/skills/lets-build/SKILL.md" "$repo/skills"
+}
+
+@test "build states its watermark" {
+  skill_says lets-build "The watermark is the later of the body's last edit and the newest read marker"
+}
+
+# prose() deduplicates matches, and SKILL.md already names gh api graphql, so
+# this reads the reference itself.
+@test "the issue-comments reference holds its fixed strings" {
+  local text fixed
+  text="$(tr -s '[:space:]' ' ' <"$repo/skills/lets-shape/references/issue-comments.md")"
+  for fixed in 'lets-shape read this thread.' '`candidate`' '`outside`' '`read`' 'gh api graphql' 'Map updated:'; do
+    grep -qF -- "$fixed" <<<"$text" || { echo "issue-comments.md does not say: $fixed"; false; }
+  done
+  grep -qE 'gh issue comment [^`]*--body-file' <<<"$text" ||
+    { echo "issue-comments.md does not post with gh issue comment --body-file"; false; }
+}
+
+@test "Revision mode reads the thread of each open story the map links" {
+  skill_says lets-shape "Read the thread of each open issue the map links"
+}
+
+@test "Ingest takes an accepted comment into the parent, as the issue-comments reference says" {
+  skill_says lets-shape "Recommend taking it into the parent issue or dismissing it"
+  skill_says lets-shape "gh issue edit <parent> --body-file <file>"
+}
+
 load support/release
 
 @test "planning vocabulary inputs resolve inside each published flow" {
@@ -246,7 +307,7 @@ load support/release
     out="$BATS_TEST_TMPDIR/$flow"
     schemas="$(jq -r --arg flow "$flow" '.flows[$flow].schemas | join(",")' "$repo/flows.json")"
     build "$out" "$schemas" $(flow_skills "$flow")
-    for skill in lets-shape lets-brainstorm lets-write-specs; do
+    for skill in lets-shape lets-brainstorm lets-write-specs lets-build; do
       assert_reference_links "$out/overlay/.agents/skills/$skill/SKILL.md" "$out/overlay"
     done
     for schema in $(jq -r --arg flow "$flow" '.flows[$flow].schemas[]' "$repo/flows.json"); do

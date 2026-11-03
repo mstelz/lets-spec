@@ -186,8 +186,11 @@ Take in the input — a file path, an issue (`gh issue view <n>`), pasted text, 
 - Restate the scope in your own words; have the user confirm
 - Surface goals and non-goals
 - List open questions as they emerge (they land in the parent issue)
+- When the input is an issue, read its thread as [Issue comments](references/issue-comments.md) says, and show the user the list. Ask about each comment not labelled `read`, in list order, one at a time. Recommend taking it into the parent issue or dismissing it, with the reason. A point the user takes in goes into the parent's Scope or Open questions.
 
 **Checkpoint:** The parent issue is public, so confirm its text first. Write it from the parent template in [templates/issue-template.md](templates/issue-template.md): the status line, the input reference, the confirmed scope and any open questions so far. Title it `Epic: <capability>`, create it with `gh issue create --title "Epic: <capability>" --body-file <file> --project "<project title>"`, then set its Kind to `Epic` with `item-edit`. Phase 5 may turn it into a single story.
+
+When the input is an issue, fetch its thread again, even when the first fetch found nothing to ask about. Ask about each comment that is new or edited since the last fetch. When a point goes into the parent, confirm the updated body and write it with `gh issue edit <parent> --body-file <file>`. Repeat until a fetch finds nothing new. Then, when the run judged at least one comment, post one reply on the input issue, as the reference says. It lists each point taken in as `Taken into #<parent>:`, and each dismissal as `Dismissed:`.
 
 ### Phase 2: Personas
 
@@ -282,12 +285,15 @@ Then hand off:
 
 Use this when the user brings one bug, chore or small story, or names an open issue that has no packet. It shapes that one issue. It never touches `discovery.md` and never starts a discovery run. Another skill can send work here too, such as `lets-brainstorm` when it splits a story; it gives you the issue's parent and what blocks it.
 
-1. **Find or create the issue.** When the user named one, read it with `gh issue view <i> --json title,body,url,parent`. Otherwise search for one first: `gh issue list --state open --search "<words> in:title" --json number,title`. If one matches, ask whether it is the same work. If none does, you create it in step 6. If the issue has a **Glossary handoff**, recover its recorded checkpoint before continuing or deciding whether this run has glossary edits. An existing issue that is not on the Project yet joins it with `gh project item-add <n> --owner <owner> --url <url>`.
+1. **Find or create the issue.** When the user names no issue, search for one first: `gh issue list --state open --search "<words> in:title" --json number,title`. If one matches, ask whether it is the same work. If none does, you create it in step 7. Read a named or confirmed issue with `gh issue view <i> --json title,body,url,parent`. Read its thread as [Issue comments](references/issue-comments.md) says, and show the user the list. If the issue has a **Glossary handoff**, recover its recorded checkpoint before continuing or deciding whether this run has glossary edits. An existing issue that is not on the Project yet joins it with `gh project item-add <n> --owner <owner> --url <url>`.
 2. **Pick the Kind, and confirm it.** A Bug is something that should work and does not. A Chore is work no persona sees, such as a dependency bump, a CI fix or a tidy-up. A Story is something a persona can do once it ships.
 3. **Read the code the issue names**, and search for more. Load shared, ancestor and affected-scope vocabulary and develop definitions as above. **Relevant code** lists what you find, or `new` when the story builds on nothing that exists.
-4. **Interview for the Kind's template** in [templates/issue-template.md](templates/issue-template.md), one question at a time: the story template for a Story, the bug template for a Bug. A Chore has no template. It needs only its one-line outcome, and a title in the template's shape. When `discovery.md` exists, use its persona and journey names, but do not edit it.
-5. **Size it** XS, S, M, L or XL. L or XL is too big for one change: say so, offer a discovery run on it instead, and stop.
-6. **Confirm, then write.** The issue is public, so show the user its title, body, Kind, Priority and Size, and get a yes. Write the packet, retaining any existing **Glossary handoff** recovery record when replacing the body. For an existing issue, use `gh issue edit <i> --title "<title>" --body-file <file>`. For a new one, use `gh issue create --title "<title>" --body-file <file> --project "<project title>" [--parent <p>] [--blocked-by <i>,<i>]`. Then set Kind, Priority, Size and Status `Todo`, in that order, with `item-edit`. A Chore and a Bug get a Priority and a Size too.
+4. **Ask about each comment not labelled `read`**, in list order, one at a time, for every Kind. Recommend fold or dismiss, with the reason. When the packet already holds what a comment says, recommend dismiss, and say so.
+5. **Interview for the Kind's template** in [templates/issue-template.md](templates/issue-template.md), one question at a time: the story template for a Story, the bug template for a Bug. A Chore has no template. It needs only its one-line outcome, and a title in the template's shape. When `discovery.md` exists, use its persona and journey names, but do not edit it.
+6. **Size it** XS, S, M, L or XL. L or XL is too big for one change: say so, offer a discovery run on it instead, and stop.
+7. **Confirm, then write.** The issue is public, so show the user its title, body, Kind, Priority and Size, and get a yes. The body carries every fold, so one write covers them all. When the user confirms that an existing packet stands unchanged, write nothing and leave its Project fields as they are. Otherwise write the packet, retaining any existing **Glossary handoff** recovery record when replacing the body. For an existing issue, use `gh issue edit <i> --title "<title>" --body-file <file>`. For a new one, use `gh issue create --title "<title>" --body-file <file> --project "<project title>" [--parent <p>] [--blocked-by <i>,<i>]`. Then set Kind, Priority, Size and Status `Todo`, in that order, with `item-edit`. A Chore and a Bug get a Priority and a Size too.
+8. **Fetch the thread again**, even when the first fetch found nothing to ask about. Show and ask about each comment that is new or edited since the last fetch. When a yes changes the body, confirm it and write it with `gh issue edit <i> --body-file <file>`. Repeat until a fetch finds nothing new.
+9. **Reply**, when this run judged at least one comment. Post one reply, as the reference says, with `gh issue comment <i> --body-file <file>`. It lists every comment judged in steps 4 and 8.
 
 Checkpoint any glossary edits and run [Glossary handoff](#glossary-handoff). Then say that `lets-build` can take it: on the default branch, it picks the next issue, or the user can name this one.
 
@@ -316,6 +322,12 @@ When `discovery.md` exists and no run is in progress:
      - the stage now works: upgrade it and drop the link;
      - an open issue now closes the gap: link that one instead;
      - nothing open does: drop the link and leave the stage an unplanned `gap`.
+   - **Read the thread of each open issue the map links**, one issue at a time, in ascending number. Take the numbers from the map's `issues/<n>` links, and keep those the issue list shows as open. Finish each issue before you fetch the next:
+     1. Fetch the thread and show the list, as [Issue comments](references/issue-comments.md) says.
+     2. Ask about each comment not labelled `read`, in list order, one at a time. When a comment changes the packet, recommend a fold, naming the line. When it changes a stage and not the packet, recommend updating the map, naming the stage. When the packet already holds it, or it changes neither, recommend dismiss, and say why.
+     3. Write what the answers call for. For a fold, show the folded body, get a yes, and write it once with `gh issue edit <i> --body-file <file>`. Write the body only. The story may be In Progress, so leave its title and Project fields as they are. For a map change, edit `discovery.md` now, with one of the three outcomes above.
+     4. If you asked anything, fetch the thread again after the write, or after the last answer when nothing was folded. Ask about each new or edited comment, and write what each yes calls for. Repeat until a fetch finds nothing new.
+     5. Post one reply with `gh issue comment <i> --body-file <file>`. An issue with nothing to ask gets no second fetch and no reply.
    - Re-annotate every journey stage against the code; stages move to `supported` as their stories ship
    - Update the freshness line to today
 2. **Take in what the user brings** — a new PRD, new requirements, changed priorities, learnings from shipped stories. New work is a new run with its own parent issue: Ingest, then MoSCoW and Stories. Revisit Personas and the Journey Map only when the input changes who the product serves or how they use it.
@@ -324,61 +336,90 @@ When `discovery.md` exists and no run is in progress:
 
 ## Glossary handoff
 
-Compare this run's owned glossary paths and checkpoints with its starting
-baseline, including recovered checkpoints on resume. Unrelated changes do
-not count. If no glossary edits were made, use the ordinary handoff without
-a glossary-specific PR question. Otherwise ask who carries the edits, not
-whether the accepted meanings are accepted again:
+Work through these steps in order. "You" is the agent; "the user" is the
+person shaping with you.
 
-- For one story, offer its build branch and PR, or a documentation PR if the
-  user stops after shaping. Do not create that PR unless they choose it.
-- For definitions shared by several stories, offer one selected story's PR
-  or a documentation PR that lands first. Select exactly one owner; do not
-  copy the edits into competing PRs or automatically stack independent work.
-- When shaping on a change branch splits another story, definitions stay in
-  the original change's separate glossary commit unless the user selects a
-  safe alternative. Record that original issue and PR as owner when the
-  split needs those definitions. The ownership question still applies.
+### Decide whether to ask
 
-Extend **Glossary handoff** in the owner issue or shaping parent with the
-selected owner issue/PR, affected paths, base, remote URL/branch, complete
-ordered checkpoint range and publication state. Reference this record from
-every affected packet's **Depends on** section; do not duplicate definitions
-in issue bodies. Record a pending ownership choice explicitly if the user
-stops before choosing. Such work remains an unresolved prerequisite.
+1. Compare this run's owned glossary paths and checkpoints with the
+   starting baseline. Include checkpoints you recovered on resume. Ignore
+   unrelated changes.
+2. If this run made no glossary edits, use the ordinary handoff. Ask no
+   glossary question, and skip the rest of this section.
 
-For a documentation PR, confirm its concrete issue and PR content with the
-user. Create a separate Chore issue with a one-line documentation outcome,
-Kind Chore, Priority and Size, assigned to the current user and Status
-In Progress. Use the Project operations above and `gh issue edit <i>
---add-assignee @me`; do not leave this Chore Todo for another build to pick.
-If assignment or a field update fails, report the incomplete setup and do
-not call the route ready. Resume setup on the same issue, never duplicate it.
-Use the verified glossary-only holding branch (or transfer its owned commits
-to a clean documentation branch) and open a PR with `Closes #<chore>`.
-Never close the implementation story or unfinished parent through that PR.
+### Ask who carries the edits
 
-This glossary documentation PR is a narrow shaping-output exception: it
-creates no OpenSpec implementation change. It still uses separate `docs:`
-commits, the project's checks before push, normal applicable finishing
-rules, and user-owned merge. Never commit to the default branch or merge it
-without the user's instruction. An existing change branch containing code
-cannot become the documentation PR; isolate only verified glossary commits.
+3. Ask the user which pull request carries the edits. Do not ask again
+   whether the meanings are accepted.
+   - For one story, offer its build branch and pull request, or a
+     documentation pull request if the user stops after shaping. Create
+     that pull request only if the user chooses it.
+   - For definitions several stories share, offer one story's pull
+     request, or a documentation pull request that lands first.
+4. Pick exactly one owner. Never copy the edits into other pull requests,
+   and never stack independent work automatically.
+5. If you are shaping on a change branch and split off another story, the
+   definitions stay in the original change's glossary commit, unless the
+   user picks a safe alternative. When the split story needs them, record
+   the original issue and pull request as the owner. Step 3 still applies.
 
-Ask for confirmation before adding the owner issue as a `blocked by` link
-to each other story requiring its unmerged definitions. Use the existing
-issue dependency operation, `gh issue edit <dependent> --add-blocked-by <owner>`,
-on each dependent story, never just the parent
-or a relates-to link. If the user declines links, keep **Depends on** explicit:
-owner, required definitions and unresolved prerequisite. Do not declare the
-dependent story ready; build's preclaim glossary check must still stop it.
-Independent stories can use those definitions once their owning PR merges.
+### Record the choice
 
-Restore owned paths to baseline as described above before normal build.
-Keep the storage branch until the destination safely contains its edits.
-After transfer, record destination branch, commits and PR in the issue's
-handoff. An unpublished or missing checkpoint is a limitation to resolve,
-not permission to recreate competing definitions in a later checkout.
+6. In the owner issue, or the shaping parent, extend **Glossary handoff**
+   with: the owner issue and pull request, the affected paths, the base,
+   the remote URL and branch, the full ordered checkpoint range, and
+   whether it is published.
+7. In each affected packet, point **Depends on** at that record. Never
+   copy definitions into issue bodies.
+8. If the user stops before choosing an owner, record that the choice is
+   pending. The work stays an unresolved prerequisite.
+
+### Set up a documentation pull request
+
+Only when the user chose a documentation pull request:
+
+9. Confirm the issue and the pull request content with the user.
+10. Create a Chore issue with a one-line documentation outcome. Set Kind
+    Chore, a Priority and a Size with the Project operations above, run
+    `gh issue edit <i> --add-assignee @me`, and set Status In Progress.
+    Never leave it Todo for another build to pick.
+11. If the assignment or a field update fails, tell the user the setup is
+    incomplete, and do not call it ready. Resume on the same issue. Never
+    create a second one.
+12. Use the verified glossary-only holding branch, or move its owned
+    commits to a clean documentation branch. Open the pull request with
+    `Closes #<chore>`. It never closes the implementation story or an
+    unfinished parent.
+13. This pull request creates no OpenSpec change. It still uses separate
+    `docs:` commits, runs the project's checks before you push, follows
+    the finishing rules that apply, and leaves the merge to the user.
+    Never commit to the default branch. A change branch that holds code
+    cannot become this pull request; take only the verified glossary
+    commits.
+
+### Link the blocked stories
+
+14. Ask the user before you add blockers. Then, on each other story that
+    needs the unmerged definitions, run
+    `gh issue edit <dependent> --add-blocked-by <owner>`. Never put the
+    blocker only on the parent, and never use a "relates to" link.
+15. If the user declines the links, make the dependent story's
+    **Depends on** name the owner, the definitions it needs and the
+    unresolved prerequisite. Do not call the story ready. Build's
+    glossary check must still stop it.
+16. Independent stories can use the definitions once the owner's pull
+    request merges.
+
+### Hand over
+
+17. Restore the owned paths to the baseline, as
+    [Preserve glossary edits between sessions](#preserve-glossary-edits-between-sessions)
+    says, before normal build. Keep the holding branch until the
+    destination holds its edits. After the transfer, record the
+    destination branch, commits and pull request in the issue's
+    **Glossary handoff**.
+18. If a checkpoint is unpublished or missing, resolve that first. It
+    never permits writing competing definitions in another checkout.
 
 ## Handing off to lets-build
 

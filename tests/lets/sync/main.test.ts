@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { run, skillsMode } from '../../../lets/src/sync/main.ts';
+import type { Deps } from '../../../lets/src/io.ts';
 import { fakeIo } from './fixtures/fake-io.ts';
 
 const RELEASE = '/store/abc-lets-spec-release';
@@ -20,7 +21,9 @@ function setup({ env = { WORKFLOW_RELEASE: RELEASE }, files = releaseFiles, topl
   const out: string[] = [];
   const err: string[] = [];
   const deps = {
-    env, cwd: '/project', packageRoot: '/pkg', nodePath: process.execPath, io,
+    env, cwd: '/project', packageRoot: '/pkg', io,
+    // sync asks no resolver.
+    resolvers: {} as Deps['resolvers'],
     stdout: (text: string) => out.push(text),
     stderr: (text: string) => err.push(text),
   };
@@ -89,6 +92,16 @@ test('a CLI version that differs from release.json is a warning in the footer', 
   assert.ok(t.stderr().includes('- the OpenSpec CLI on PATH is 1.4.0, but this release'));
 });
 
+test('a WORKFLOW_RELEASE outside the package still warns from the package release.json', async () => {
+  const files: Record<string, string> = { ...releaseFiles };
+  files['/pkg/release.json'] = JSON.stringify({ version: '0.1.0', openspec: '1.2.3', commit: 'abc' });
+  const t = setup({ files, toplevel: '/project' });
+  const original = t.io.execFile;
+  t.io.execFile = async (cmd, args, opts) => (cmd === 'openspec' ? { stdout: '1.4.0\n', stderr: '', code: 0 } : original(cmd, args, opts));
+  assert.equal(await run({ check: false }, t.deps), 0);
+  assert.ok(t.stderr().includes("- the OpenSpec CLI on PATH is 1.4.0, but this release's openspec-* skills were generated from 1.2.3. Pin the CLI to 1.2.3."));
+});
+
 test('an empty LETS_SPEC_SKILLS means the default, committed', () => {
   assert.equal(skillsMode({ LETS_SPEC_SKILLS: '' }), 'committed');
 });
@@ -120,4 +133,20 @@ test('in the ignored mode, a failed git ls-files counts as nothing tracked', asy
   const t = ignoredWithLsFiles({ stdout: '.agents/skills/lets-build/SKILL.md\n', stderr: 'fatal: boom', code: 128 });
   assert.equal(await run({ check: false }, t.deps), 0);
   assert.ok(!t.stderr().includes('git still tracks'));
+});
+
+const unownedFiles = { ...releaseFiles, [`${RELEASE}/overlay/.agents/skills/other/SKILL.md`]: 'skill' };
+
+test('a release that ships an unowned skill writes nothing', async () => {
+  const t = setup({ files: unownedFiles, toplevel: '/project' });
+  const before = new Map(t.io.files);
+  assert.equal(await run({ check: false }, t.deps), 1);
+  assert.ok(t.stderr().includes('ships .agents/skills/other, which lets sync does not own.'));
+  assert.deepEqual(t.io.files, before);
+});
+
+test('in the ignored mode, check refuses a release that ships an unowned skill', async () => {
+  const t = setup({ env: { WORKFLOW_RELEASE: RELEASE, LETS_SPEC_SKILLS: 'ignored' }, files: unownedFiles, toplevel: '/project' });
+  assert.equal(await run({ check: true }, t.deps), 1);
+  assert.ok(t.stderr().includes('ships .agents/skills/other, which lets sync does not own.'));
 });
