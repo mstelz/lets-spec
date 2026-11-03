@@ -40,3 +40,98 @@ must remain explicit. No operation may select another provider as recovery.
 Archive, review, checks, commits, branch creation, PR readiness, rejection and
 archive reverts remain workflow/code-host responsibilities. Closing automation
 is evidence to reconcile after merge, rather than permission to complete early.
+
+## Protocol 1
+
+Run the configured executable directly, with no shell and no appended arguments.
+Write one UTF-8 JSON object to stdin and close stdin. Read one JSON object from
+stdout; diagnostics go to stderr and must exclude credentials. Each invocation
+is a separate process. The caller supplies an absolute repository `cwd` and
+sets the process working directory to it. No adapter may infer another backlog.
+
+Requests contain `protocol: 1`, `operation`, `context`, `input`, and, for a
+mutation, a nonempty `mutationId` reused across retries. Context requires `cwd`,
+`provider`, `backlog`, `repository`, `actor` and `session`. Actor identifies the
+authenticated account; session identifies this worker, even when two workers
+share an account. Backlog and item IDs are opaque, provider-scoped strings.
+An item identity is `{provider, backlog, id}`. A display reference is required
+on returned items; a browser URL is optional.
+
+`contrib/backlog-adapter-kit/protocol.ts` publishes executable required/optional
+field definitions in `INPUTS` and `OUTPUTS`; a trailing `?` marks an optional
+field. Unknown operation input and result fields are rejected. Those definitions
+are the machine-checkable protocol surface. The validators are dependency-free
+and usable by adapter authors. Nested item, capability and claim meanings are
+specified in the following sections and checked by the scenario suite.
+
+Success is `{protocol:1, ok:true, result:{...}}` with exit 0. Failure is
+`{protocol:1, ok:false, error:{category,message,effects}}` with nonzero exit.
+Success cannot contain error and failure cannot contain result. Categories are
+invalid_request, invalid_configuration, authentication, permission, not_found,
+unsupported, conflict, transient and unknown_outcome. Effects are none, partial
+or unknown; unknown_outcome must never promise none. Partial results must be
+reconciled using the mutation key and ownership state before proceeding.
+
+Enumerations return `items`, `complete` and `nextCursor`. Complete enumeration
+has a null cursor; incomplete enumeration requires a nonempty next cursor.
+The caller follows cursors and detects repeated cursors. A provider that cannot
+finish a required enumeration reports unsupported; it cannot return an empty
+complete result to hide a gap. Readiness requires complete blocker evidence.
+
+The harness imposes a caller-selected positive timeout (default 5 seconds),
+a 1 MiB output limit and process termination on timeout/overflow. Invalid JSON,
+wrong protocol, signal termination and inconsistent exit/result are contract
+failures. A timeout on a mutation is an unknown outcome, even if the process
+was killed. Killing the client cannot roll back a provider write.
+
+Example read request:
+
+```json
+{"protocol":1,"operation":"item.read","context":{"cwd":"/repo","provider":"beads","backlog":"local","repository":"repo","actor":"me","session":"worker-1"},"input":{"item":{"provider":"beads","backlog":"local","id":"bd-a"}}}
+```
+
+Example enumeration response:
+
+```json
+{"protocol":1,"ok":true,"result":{"items":[],"complete":true,"nextCursor":null}}
+```
+
+The executable boundary permits independently shipped adapters in any language,
+using provider login tools without loading their dependencies into lets. An
+in-process plugin would couple runtime versions and credentials to the caller.
+Direct provider commands in skills duplicate policy and parsing. A long-running
+service adds deployment and lifecycle requirements. Process isolation does not
+sandbox an adapter: installing its executable is a repository trust decision.
+
+## Operation semantics
+
+Every operation is confined to context.repository and context.backlog. Reads
+have no effects. Mutations require a key bound to the operation and exact input;
+reusing a key with different input is invalid_request.
+
+| Operation | Preconditions and input | Successful result and effects | Recovery |
+|---|---|---|---|
+| backlog.list | Authenticated repository context; optional cursor | Complete or paged linked backlogs; no writes | Retry reads |
+| backlog.create | Permission to create/link; title | Selected backlog ID; creates and links once | Reconcile key before recreate |
+| backlog.check | Selected backlog exists | valid and actionable mapping gaps; no writes | Fix configuration explicitly |
+| item.search | Query and optional cursor | Scoped items with packet bodies | Retry reads |
+| item.read | Existing scoped identity | Full normalized item | not_found stays explicit |
+| item.create | Title, body and shared metadata | New normalized item in selected backlog | Reconcile key to avoid duplicates |
+| item.update | Identity and targeted patch | Updated item; unrelated fields preserved | Read after uncertainty, reapply desired patch only |
+| relationship.write | Two existing identities, kind and desired present boolean | Desired relationship state | Reconcile edge, then set desired state |
+| relationship.list | Identity, kind and optional cursor | Directional edges with target state | Require complete evidence |
+| candidate.list | Selected repository context | Normalized candidate items | Shared caller filters and ranks |
+| claim.acquire | Unowned item | Verified ownership and In Progress state with declared guarantee | Reconcile ownership and status |
+| claim.read | Identity | Ownership, session, token, guarantee and status | Read before retry/progression |
+| claim.release | Identity and this session's token | released boolean; restores Todo only for own claim | Read ownership before retry |
+| reference.write | Identity and code-host reference | Stored reference without duplicate association | Read/reconcile before retry |
+| completion.write | Identity and code-host merge evidence | Done after confirmed merge | Read status; already Done succeeds |
+| mutation.read | Original mutationId in same scope | state applied, absent or unknown; original result when applied | Unknown blocks retries and progression |
+| capability.read | Selected context | Declared support and limits | Unknown capability is a gap |
+
+Authentication and permission failures require intervention; they never cause
+fallback. Invalid requests/configuration must be fixed. Conflicts preserve the
+current owner's data. Transient reads may retry with bounded backoff. A mutation
+with confirmed effects none may retry its original key; partial/unknown effects
+require reconciliation. If the provider cannot prove absence or deduplicate a
+creation, stop for manual reconciliation rather than issue another create.
