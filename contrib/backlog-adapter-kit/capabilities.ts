@@ -17,13 +17,26 @@ export function readyWork(items: Candidate[], repository: string): Candidate[] {
     const priority = ['Must', 'Should', 'Could'];
     const rank = priority.indexOf(a.metadata.Priority) - priority.indexOf(b.metadata.Priority);
     if (rank) return rank;
-    if (a.identity.provider === 'github' && b.identity.provider === 'github' && a.identity.backlog === b.identity.backlog && /^#?\d+$/.test(a.reference) && /^#?\d+$/.test(b.reference)) {
-      const left = BigInt(a.reference.replace('#', '')); const right = BigInt(b.reference.replace('#', ''));
-      if (left !== right) return left < right ? -1 : 1;
+    for (const field of ['provider', 'backlog'] as const) {
+      const comparison = compareText(a.identity[field], b.identity[field]);
+      if (comparison) return comparison;
     }
-    const left = identityKey(a.identity); const right = identityKey(b.identity);
-    return left < right ? -1 : left > right ? 1 : 0;
+    if (a.identity.provider === 'github') {
+      const numericA = /^#?\d+$/.test(a.reference); const numericB = /^#?\d+$/.test(b.reference);
+      if (numericA !== numericB) return numericA ? -1 : 1;
+      if (numericA) {
+        const left = BigInt(a.reference.replace('#', '')); const right = BigInt(b.reference.replace('#', ''));
+        if (left !== right) return left < right ? -1 : 1;
+      }
+    }
+    return compareText(a.identity.id, b.identity.id);
   }); }
+function compareText(left: string, right: string): number {
+  const a = Array.from(left, character => character.codePointAt(0)!);
+  const b = Array.from(right, character => character.codePointAt(0)!);
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return a.length - b.length;
+}
 /** Reference simulation of directed relationships, not a provider implementation. */
 export class Relationships {
   capabilities: Capabilities;

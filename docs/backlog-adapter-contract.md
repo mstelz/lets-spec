@@ -215,7 +215,10 @@ complete before selection proceeds.
 The shared caller filters repository, Todo, non-Epic, Must/Should/Could,
 unassigned and no open blockers. It ranks Must, Should, Could, then compares
 scoped identity tuples lexically by code point. The GitHub profile preserves its
-existing same-backlog numeric issue-reference tie-break before the tuple fallback.
+existing same-backlog numeric issue-reference tie-break. Within each GitHub
+provider/backlog group, numeric references sort before nonnumeric references;
+equal numbers and nonnumeric references fall back to the raw opaque ID. Compare
+raw tuple components by Unicode code point, never their JSON encoding.
 No locale-dependent collation or provider search ordering determines selection.
 
 Generic item creation starts at Todo. Generic item updates cannot write Status;

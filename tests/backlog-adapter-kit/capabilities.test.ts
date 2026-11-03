@@ -39,3 +39,12 @@ test('unsupported hierarchy prevents any edge write', () => {
 test('claim capability requires an explicit guarantee', () => {
   assert.throws(() => requireCapability({ claims: { support: 'native', limits: '' } }, 'claims'), /guarantee/);
 });
+test('mixed GitHub references have one order across permutations', () => {
+  const a = make('z'); a.identity.provider = 'github'; a.reference = '#2';
+  const b = make('a'); b.identity.provider = 'github'; b.reference = '#10';
+  const c = make('m'); c.identity.provider = 'github'; c.reference = 'draft';
+  for (const permutation of [[a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]]) assert.deepEqual(readyWork(permutation, 'r').map(item => item.reference), ['#2', '#10', 'draft']);
+});
+test('opaque ID ordering compares raw code points', () => {
+  assert.deepEqual(readyWork(['a!', '\u{10000}', 'a', '\uE000'].map(id => make(id)), 'r').map(item => item.reference), ['a', 'a!', '\uE000', '\u{10000}']);
+});
