@@ -56,6 +56,7 @@ export function readMapped(data: Record<string, unknown>, mappings: Mappings): M
   const result: Record<string, string> = {};
   for (const [field, mapping] of Object.entries(mappings)) {
     const stored = data[mapping.field];
+    if (mapping.cardinality === 'many' ? !Array.isArray(stored) : typeof stored !== 'string') throw new Error(`invalid_configuration: storage cardinality for ${mapping.field}`);
     const matches = Object.entries(mapping.values).filter(([, value]) => Array.isArray(stored) ? stored.includes(value) : stored === value);
     if (matches.length !== 1) throw new Error(`invalid_configuration: ambiguous or missing ${field} value`);
     result[field] = matches[0][0];

@@ -43,3 +43,11 @@ for (const stored of ['Priority:Must', 'Priority:P0']) {
 test('mapping rejects an unknown shared field', () => {
   assert.throws(() => validateMappings({ ...mappings, Custom: mappings.Priority }), /invalid_configuration.*Custom/);
 });
+for (const cardinality of ['one', 'many'] as const) {
+  test(`mapping read enforces ${cardinality} cardinality`, () => {
+    const configured = { ...mappings, Priority: { ...mappings.Priority, cardinality } };
+    const data = updateMapped({}, item.metadata, configured);
+    data.priority = cardinality === 'one' ? ['Priority:Must'] : 'Priority:Must';
+    assert.throws(() => readMapped(data, configured), /cardinality/);
+  });
+}
