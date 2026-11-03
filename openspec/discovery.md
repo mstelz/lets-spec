@@ -27,7 +27,7 @@
 
 ## Journey Map
 
-Stage status checked against the code on 2026-10-20.
+Stage status checked against the code on 2026-11-02.
 
 ### People who use Let's Spec
 
@@ -36,16 +36,16 @@ Stage status checked against the code on 2026-10-20.
 ```
   Set it up ──► Set up the backlog ──► Shape ──► Build ──► Review ──► Merge ──► Update
       │               │                 │          │          │          │         │
-   partial         partial          supported   partial    partial   supported  partial
+   partial         partial           partial    partial   supported  supported  partial
 ```
 
-1. **Set it up** — install with Nix or mise, run `lets sync`, describe the project — partial: the resolver is installed by hand, one per machine, and nothing updates it when the release moves ([#44](https://github.com/andrewduckett/lets-spec/issues/44)); setup asks nothing in a terminal ([#50](https://github.com/andrewduckett/lets-spec/issues/50)); the flow and skills mode live in `mise.toml`, not the project's config ([#23](https://github.com/andrewduckett/lets-spec/issues/23)); the mise example does not say when to pin ([#25](https://github.com/andrewduckett/lets-spec/issues/25))
-2. **Set up the backlog** — `lets-setup-backlog` creates the Project and its fields — partial: the skill describes workflows a new Project no longer has ([#18](https://github.com/andrewduckett/lets-spec/issues/18)); views, options and workflows are not converged ([#29](https://github.com/andrewduckett/lets-spec/issues/29))
-3. **Shape** — `lets-shape` turns an idea or a bug into issues with packets — supported
-4. **Build** — `lets-build` claims an issue, plans it, and builds the plan in a fresh session — partial: one binary picks between harnesses at run time instead of one program per harness chosen at setup ([#47](https://github.com/andrewduckett/lets-spec/issues/47), [#48](https://github.com/andrewduckett/lets-spec/issues/48), [#49](https://github.com/andrewduckett/lets-spec/issues/49)); a stale resolver is not detected before the plan exists ([#33](https://github.com/andrewduckett/lets-spec/issues/33))
-5. **Review** — plan and code reviews run in a fresh session, from another family — partial: a review from T3 picks a model the account cannot run ([#34](https://github.com/andrewduckett/lets-spec/issues/34)); the gemini CLI returns nothing headless ([#35](https://github.com/andrewduckett/lets-spec/issues/35))
-6. **Merge** — the user merges the pull request; archive is the last commit — supported
-7. **Update** — move the pin, sync, commit — partial: `lets --version` says 0.0.0-dev under Nix ([#19](https://github.com/andrewduckett/lets-spec/issues/19)); the label-backlog migration is undocumented ([#20](https://github.com/andrewduckett/lets-spec/issues/20)); the OpenSpec CLI warning does not name the line to set ([#26](https://github.com/andrewduckett/lets-spec/issues/26))
+1. **Set it up** — install with Nix or mise and run `lets sync` — partial: installation and sync exist; a guided repository setup is still being shaped ([#65](https://github.com/sidereal-io/lets-spec/issues/65)).
+2. **Set up the backlog** — create or check the repository's selected backlog — partial: GitHub Project creation and field checks exist. The shared GitHub setup path ([#137](https://github.com/sidereal-io/lets-spec/issues/137)) and target selection/checking for Beads ([#138](https://github.com/sidereal-io/lets-spec/issues/138)), Linear ([#140](https://github.com/sidereal-io/lets-spec/issues/140)) and Jira Cloud ([#142](https://github.com/sidereal-io/lets-spec/issues/142)) are missing.
+3. **Shape** — turn an idea, bug or chore into work items with packets and dependencies — partial: GitHub shaping exists. Publishing and resuming discovery through the shared boundary is missing for GitHub ([#137](https://github.com/sidereal-io/lets-spec/issues/137)), Beads ([#139](https://github.com/sidereal-io/lets-spec/issues/139)), Linear ([#141](https://github.com/sidereal-io/lets-spec/issues/141)) and Jira Cloud ([#144](https://github.com/sidereal-io/lets-spec/issues/144)); creating a single Jira Cloud packet is also missing ([#143](https://github.com/sidereal-io/lets-spec/issues/143)).
+4. **Build** — select and claim ready work, plan and build it, and retain its identity through a pull request and completion — partial: GitHub selection, claiming and OpenSpec handoff exist. The shared GitHub lifecycle ([#136](https://github.com/sidereal-io/lets-spec/issues/136)) and Beads ([#138](https://github.com/sidereal-io/lets-spec/issues/138)), Linear ([#140](https://github.com/sidereal-io/lets-spec/issues/140)) and Jira Cloud ([#142](https://github.com/sidereal-io/lets-spec/issues/142)) paths are missing.
+5. **Review** — plan and code reviews request a fresh session and prefer another model family, using the models the resolver reports — supported.
+6. **Merge** — the user merges the pull request; archive is the last commit — supported.
+7. **Update** — move the pin, sync and commit — partial: the commands exist, but the OpenSpec version warning lacks the exact configuration line to change ([#26](https://github.com/sidereal-io/lets-spec/issues/26)). Nix release metadata in this checkout still uses a development version; no open issue currently covers that gap.
 
 ### People who build Let's Spec
 
@@ -54,14 +54,14 @@ Stage status checked against the code on 2026-10-20.
 ```
   Change ──► Release ──► Bump the pin here ──► Walk Mo's journey
      │          │               │                     │
- supported  supported        partial               partial
+  partial   supported        partial               partial
 ```
 
-1. **Change** — one issue, one branch, one pull request, planned with Let's Spec — supported
-2. **Release** — push a tag; the workflow builds and publishes the tarball — supported
-3. **Bump the pin here** — a pull request moves `mise.toml` to the release and commits what `lets sync` wrote — partial: done by hand after each release ([#41](https://github.com/andrewduckett/lets-spec/issues/41))
-4. **Walk Mo's journey** — every change on this repository goes through the skills — partial: see Mo's journey above
+1. **Change** — plan, implement and check one issue on one branch and pull request — partial: the existing workflow is supported, but backlog adapter authors lack a guide and working example ([#145](https://github.com/sidereal-io/lets-spec/issues/145)). Helpers for repeatable live-test data are also missing ([#146](https://github.com/sidereal-io/lets-spec/issues/146)).
+2. **Release** — push a tag; the workflow builds and publishes the tarball — supported.
+3. **Bump the pin here** — move `mise.toml` to the release and run `lets sync` — partial: the repository pins a published release, but moving that pin is manual; no open issue currently covers automation.
+4. **Walk Mo's journey** — use the skills for this repository's own work — partial: see Mo's journey above.
 
 ## Backlog
 
-Stories are GitHub issues: <https://github.com/andrewduckett/lets-spec/issues>.
+Stories are GitHub issues: <https://github.com/sidereal-io/lets-spec/issues>.
