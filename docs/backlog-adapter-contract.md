@@ -214,3 +214,24 @@ unassigned and no open blockers. It ranks Must, Should, Could, then compares
 scoped identity tuples lexically by code point. The GitHub profile preserves its
 existing same-backlog numeric issue-reference tie-break before the tuple fallback.
 No locale-dependent collation or provider search ordering determines selection.
+
+## Claim guarantees
+
+A claim reports actor, session, token, status and guarantee (atomic or
+best-effort). Existing ownership is a conflict, including another session using
+the same account. Acquire checks ownership, assigns, moves to In Progress and
+verifies the result. Only matching ownership and In Progress permit build.
+Lost responses require claim.read/mutation.read reconciliation before another
+acquire. Assignment without the status transition is partial progress and
+cannot authorize a build. Repair or release only after proving current ownership.
+
+Release requires the original actor, session and token and restores Todo. A
+provider without durable session provenance cannot safely distinguish workers
+sharing an account: declare that limitation and stop uncertain release or claim
+recovery for manual reconciliation. Never remove another worker's ownership.
+
+Best-effort verification is a snapshot, not exclusive execution: another worker
+may race after verification. Do not advertise atomic guarantees for a sequence
+of assignment and status writes. The synchronous reference state machine tests
+outcomes; a production atomic profile requires evidence of a provider primitive
+that enforces the declared ownership condition under concurrent attempts.
