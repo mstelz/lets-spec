@@ -135,3 +135,18 @@ current owner's data. Transient reads may retry with bounded backoff. A mutation
 with confirmed effects none may retry its original key; partial/unknown effects
 require reconciliation. If the provider cannot prove absence or deduplicate a
 creation, stop for manual reconciliation rather than issue another create.
+
+## Items and shared metadata
+
+Returned items contain identity, reference, title, body, metadata and owners;
+url is optional. Identity comparisons use the full provider/backlog/id tuple,
+encoded without delimiter ambiguity. Neither a URL nor a display reference is
+an identity. Shared metadata is exactly Kind, Priority, Size and Status, using
+the values in `METADATA` in the kit. There is no generic provider-field input.
+
+Mappings associate each shared value with an adapter-local field/value pair.
+Each pair must have one meaning. Reads reject missing or ambiguous values.
+The reference mapping simulator accepts scalar fields and label arrays. Updates
+remove only the old values owned by the changed mapping; other labels and fields
+remain. Production adapters must validate provider field types and permitted
+values themselves, including workflow transition constraints.
