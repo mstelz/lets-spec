@@ -17,9 +17,10 @@ export async function invoke(executable: string, request: Record<string, any>, o
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', chunk => { if (count(chunk)) stdout += chunk; });
     child.on('error', error => { clearTimeout(timer); reject(error); });
-    child.on('close', code => {
+    child.on('close', (code, signal) => {
       clearTimeout(timer);
       try {
+        if (signal || code === null) throw new Error(`contract failure: signal termination ${signal}`);
         const response = JSON.parse(stdout);
         validateResponse(response, code ?? -1, request.operation);
         resolve(response);

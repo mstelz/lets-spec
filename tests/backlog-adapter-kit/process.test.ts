@@ -32,3 +32,6 @@ for (const category of ['authentication', 'permission', 'transient', 'unknown_ou
     } finally { rmSync(cwd, { recursive: true, force: true }); }
   });
 }
+test('signal termination rejects even a valid failure envelope', async () => {
+  await assert.rejects(invoke(process.execPath, request, { args: [fixture, 'signal'] }), /signal/);
+});
