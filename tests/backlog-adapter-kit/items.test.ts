@@ -34,3 +34,12 @@ test('two shared meanings cannot share scalar storage', () => {
   bad.Priority.field = bad.Kind.field;
   assert.throws(() => validateMappings(bad), /cardinality/);
 });
+for (const stored of ['Priority:Must', 'Priority:P0']) {
+  test(`mapping rejects extra shared meaning ${stored}`, () => {
+    const bad = structuredClone(mappings); bad.Priority.values.Urgent = stored;
+    assert.throws(() => validateMappings(bad), /invalid_configuration.*Urgent/);
+  });
+}
+test('mapping rejects an unknown shared field', () => {
+  assert.throws(() => validateMappings({ ...mappings, Custom: mappings.Priority }), /invalid_configuration.*Custom/);
+});

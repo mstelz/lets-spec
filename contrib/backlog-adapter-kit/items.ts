@@ -17,6 +17,7 @@ export function identityKey(identity: Identity): string { validateIdentity(ident
 export type Mappings = Record<string, { field: string; cardinality: 'one' | 'many'; values: Record<string, string> }>;
 export function validateMappings(mappings: Mappings): void {
   object(mappings, 'invalid_configuration: mappings');
+  for (const key of Object.keys(mappings)) if (!Object.hasOwn(METADATA, key)) throw new Error(`invalid_configuration: unknown mapping ${key}`);
   const used = new Set<string>();
   const storage = new Map<string, string>();
   for (const [field, values] of Object.entries(METADATA)) {
@@ -24,6 +25,8 @@ export function validateMappings(mappings: Mappings): void {
     if (!mapping || typeof mapping.field !== 'string' || !mapping.field) throw new Error(`invalid_configuration: mapping ${field} missing field`);
     if (!['one', 'many'].includes(mapping.cardinality) || (storage.has(mapping.field) && (mapping.cardinality !== 'many' || storage.get(mapping.field) !== 'many'))) throw new Error(`invalid_configuration: conflicting cardinality for ${mapping.field}`);
     storage.set(mapping.field, mapping.cardinality);
+    object(mapping.values, `invalid_configuration: mapping ${field}.values`);
+    for (const key of Object.keys(mapping.values)) if (!(values as readonly string[]).includes(key)) throw new Error(`invalid_configuration: unknown mapping ${field}.${key}`);
     for (const value of values) {
       const stored = mapping.values?.[value];
       if (typeof stored !== 'string' || !stored) throw new Error(`invalid_configuration: mapping ${field}.${value} missing`);
