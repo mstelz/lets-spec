@@ -1,4 +1,4 @@
-import { validateItem } from './items.ts';
+import { validateItem, METADATA } from './items.ts';
 import { isAbsolute } from 'node:path';
 /** Offline contract definitions; not a production dispatcher. */
 export const PROTOCOL = 1;
@@ -15,6 +15,14 @@ export function validateRequest(value: unknown): void {
   if (MUTATIONS.includes(request.operation as string) && (typeof request.mutationId !== 'string' || request.mutationId === '')) throw new Error('mutationId is required');
   if (request.operation === 'item.read') validateIdentity((request.input as Record<string, unknown>)?.item);
   fields(request.input, INPUTS[request.operation as string], 'input');
+  const input = request.input as Record<string, unknown>;
+  if (request.operation === 'item.update') fields(input.patch, { 'title?': 'text', 'body?': 'string', 'metadata?': 'object' }, 'input.patch');
+  const metadata = request.operation === 'item.create' ? input.metadata : request.operation === 'item.update' ? (input.patch as Record<string, unknown>).metadata : undefined;
+  if (metadata !== undefined) {
+    const values = object(metadata, 'input.metadata');
+    for (const [field, value] of Object.entries(values)) if (!(field in METADATA) || !(METADATA[field as keyof typeof METADATA] as readonly unknown[]).includes(value)) throw new Error(`invalid input.metadata.${field}`);
+    if (request.operation === 'item.create') for (const field of Object.keys(METADATA)) if (!(field in values)) throw new Error(`input.metadata.${field} required`);
+  }
   if (!isAbsolute(context!.cwd as string)) throw new Error('context.cwd must be absolute');
 }
 

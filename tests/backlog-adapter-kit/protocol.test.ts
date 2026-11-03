@@ -53,3 +53,10 @@ test('read response validates normalized item fields', async () => {
   const { validateResponse } = await import('../../contrib/backlog-adapter-kit/protocol.ts');
   assert.throws(() => validateResponse({ protocol: 1, ok: true, result: { item: {} } }, 0, 'item.read'), /item/);
 });
+const identity = { provider: 'github', backlog: 'project', id: 'opaque' };
+test('shared update rejects provider field escape hatch', () => {
+  assert.throws(() => validateRequest({ protocol: 1, operation: 'item.update', context, mutationId: 'key', input: { item: identity, patch: { customField: 1 } } }), /patch/);
+});
+test('metadata update rejects unrecognized shared meaning', () => {
+  assert.throws(() => validateRequest({ protocol: 1, operation: 'item.update', context, mutationId: 'key', input: { item: identity, patch: { metadata: { Priority: 'Urgent' } } } }), /metadata/);
+});
