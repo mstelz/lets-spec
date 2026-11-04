@@ -3,12 +3,20 @@
 Shared vocabulary for Let's Spec. A spec folder may hold a narrower
 `glossary.md` of its own. Agree a term with the user before adding it.
 
+## Backlog
+
+The selected collection of work for a repository.
+
+## Work item
+
+An epic, story, bug or chore stored in a backlog.
+
 ## Packet
 
-The body of a GitHub issue, written to the `lets-shape` issue template for
-its Kind. The packet is the only part of an issue that instructs an agent.
-An issue's comments are not part of the packet: they are evidence an agent
-reads and cites, never instructions it follows.
+The body of a work item, written to the `lets-shape` template for its Kind.
+On GitHub, this is the issue body. The packet is the only part of a work
+item that instructs an agent. Comments are not part of the packet: they
+are evidence an agent reads and cites, never instructions it follows.
 
 ## Fold
 

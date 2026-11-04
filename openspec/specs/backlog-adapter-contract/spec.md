@@ -2,20 +2,23 @@
 
 ## Purpose
 
-Define and validate the shared backlog adapter boundary before production integrations are built, preserving the existing GitHub workflow while accommodating GitHub, Jira Cloud, Linear and local Beads.
+Define the shared backlog adapter boundary and its conformance guarantees, preserving the GitHub workflow while accommodating GitHub, Jira Cloud, Linear and local Beads.
 
 ## Requirements
 
 ### Requirement: Contract validation leaves production integrations unchanged
-This change SHALL deliver a documented contract, machine-checkable request/response definitions and a reusable fake-executable conformance harness without introducing a production backlog dispatcher, provider adapter or workflow migration.
+The backlog adapter contract SHALL provide machine-checkable request/response
+definitions and an offline executable conformance harness. Running conformance
+SHALL require neither provider credentials nor network access and SHALL NOT
+mutate production backlogs or migrate the production workflow.
 
 #### Scenario: Contract work ships
-- **WHEN** this change is delivered
-- **THEN** its conformance suite runs without provider credentials or network access
-- **AND** the existing production workflow continues to use its existing GitHub commands
+- **WHEN** a maintainer runs the conformance suite without provider credentials or network access
+- **THEN** the suite exercises local fixtures successfully
+- **AND** no production provider calls or workflow migrations occur
 
 ### Requirement: Executable boundary separates responsibilities
-The contract SHALL define versioned JSON requests on stdin and responses on stdout for executable backlog adapters, with diagnostic stderr, supported operations, operation-specific invocation context, protocol compatibility, process exit behavior and timeout handling. It SHALL assign workflow policy to the shared caller, provider translation to adapters and branch/pull request operations to the code host.
+The contract SHALL define versioned JSON requests on stdin and responses on stdout for executable backlog adapters, with diagnostic stderr, supported operations, operation-specific invocation context, protocol compatibility, process exit behavior, start failures, signal termination, combined stdout/stderr byte limits and timeout handling. It SHALL assign workflow policy to the shared caller, provider translation to adapters and branch/pull request operations to the code host.
 
 #### Scenario: Fake adapter handles a request
 - **WHEN** the harness invokes a fake adapter with a supported protocol and operation
@@ -24,6 +27,24 @@ The contract SHALL define versioned JSON requests on stdin and responses on stdo
 #### Scenario: Broken process boundary
 - **WHEN** a fake adapter returns malformed JSON, an unsupported protocol, an inconsistent exit/result pair or no response before the timeout
 - **THEN** the harness reports a contract failure and does not treat the operation as successful
+
+#### Scenario: Executable cannot start
+- **WHEN** the configured adapter executable cannot be started
+- **THEN** invocation rejects with category unknown_outcome and effects unknown
+- **AND** only the supplied executable is attempted
+
+#### Scenario: Combined diagnostic and response output exceeds its limit
+- **WHEN** adapter stdout and stderr together exceed the configured byte limit
+- **THEN** the caller stops the adapter with SIGKILL and reports an unknown outcome
+- **AND** mutation retry or progression requires reconciliation
+
+#### Scenario: Signal interrupts an invocation
+- **WHEN** an adapter prints a valid response and then terminates by signal
+- **THEN** the caller rejects the invocation as an unknown outcome rather than accepting the response
+
+#### Scenario: Adapter ignores graceful termination
+- **WHEN** an adapter ignores SIGTERM and exceeds its deadline
+- **THEN** the invocation stops the adapter with SIGKILL and reports unknown_outcome with unknown effects
 
 ### Requirement: Contract covers the full backlog workflow
 The contract SHALL define inputs, outputs, preconditions, side effects and failure outcomes for setup/checking, discovery and work-item reading/searching, creation and targeted updates, metadata, parent/child and directional blocker relationships, candidate enumeration, claiming/release, pull request references and completion. Shared policy SHALL retain packet validation, routing and ready-work ranking rather than delegating those decisions to provider-specific rules.
@@ -113,6 +134,19 @@ The contract SHALL distinguish invalid requests/configuration, authentication, p
 - **WHEN** a provider denies an update
 - **THEN** the error identifies the permission failure and does not trigger fallback to another provider
 
+#### Scenario: Unsupported request protocol
+- **WHEN** the representative adapter receives a request using an unsupported protocol version
+- **THEN** it returns category unsupported with effects none
+
+#### Scenario: Invalid request input
+- **WHEN** the representative adapter receives malformed JSON or an unknown operation
+- **THEN** it returns category invalid_request with effects none
+
+#### Scenario: Unexpected adapter implementation error
+- **WHEN** the representative adapter encounters an unexpected programming error whose message contains a known error-category word
+- **THEN** its response reports unknown_outcome with unknown effects
+- **AND** it does not classify the error by matching words in the message
+
 ### Requirement: Completion follows confirmed merge
 The contract SHALL accept completion only after the code-host boundary confirms merge of the associated pull request. A ready pull request SHALL leave the work In Progress. Completion SHALL be idempotent and reconcile provider-native closing automation with explicit updates.
 
@@ -125,7 +159,7 @@ The contract SHALL accept completion only after the code-host boundary confirms 
 - **THEN** retrying observes Done without duplicate completion effects
 
 ### Requirement: Four-provider evidence qualifies conformance claims
-The delivered contract SHALL include a traceable behavior inventory, rationale for the chosen integration boundary and a primary-source evidence matrix for representative GitHub, Jira Cloud, Linear and local Beads scenarios. Each scenario SHALL identify native/emulated/unsupported behavior, assumptions and configuration/version limits. The fake suite SHALL detect intentionally nonconforming behavior as well as accept conforming fixtures. Fake results SHALL NOT establish live adapter support; each production adapter still requires automated checks and a real end-to-end test before release support is claimed.
+The contract SHALL include a traceable behavior inventory, rationale for the chosen integration boundary and a primary-source evidence matrix for representative GitHub, Jira Cloud, Linear and local Beads scenarios. Each scenario SHALL identify native/emulated/unsupported behavior, assumptions and configuration/version limits. The fake suite SHALL detect intentionally nonconforming behavior as well as accept conforming fixtures. Fake results SHALL NOT establish live adapter support; each production adapter still requires automated checks and a real end-to-end test before release support is claimed.
 
 #### Scenario: Four profiles are checked
 - **WHEN** the offline conformance suite runs
@@ -147,3 +181,13 @@ Backlog discovery and creation SHALL accept repository/provider context without 
 #### Scenario: Another scope shares local storage
 - **WHEN** another repository or backlog uses the same fake storage directory
 - **THEN** item reads and enumeration do not expose items outside the selected scope
+
+### Requirement: Runtime releases exclude unused conformance payloads
+The runtime release SHALL exclude unused adapter-kit source, test fixtures and
+contract documentation. Offline conformance SHALL remain runnable from the
+repository independently of the runtime release.
+
+#### Scenario: Runtime release is inspected
+- **WHEN** a maintainer builds and inspects the runtime release before any production command consumes the kit
+- **THEN** the release contains no standalone adapter-kit source, test fixtures or copied contract document
+- **AND** the repository conformance suite remains runnable

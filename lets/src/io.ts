@@ -2,8 +2,18 @@
 // Tests pass a fake with the same methods.
 import { execFile as nodeExecFile } from 'node:child_process';
 import {
-  chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync,
-  readlinkSync, rmSync, statSync, symlinkSync, writeFileSync,
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -12,7 +22,14 @@ import type { Adapter } from './resolvers/kit/adapter.ts';
 
 // What a command printed, and its exit code. code is null when the command
 // cannot start. timedOut: the command ran past timeoutMs, and was stopped.
-export type ExecResult = { stdout: string; stderr: string; code: number | null; timedOut?: boolean };
+export type ExecResult = {
+  stdout: string;
+  stderr: string;
+  code: number | null;
+  timedOut?: boolean;
+  outputLimitExceeded?: boolean;
+  signal?: NodeJS.Signals;
+};
 
 // env replaces the whole environment. input is written to stdin, which is
 // closed either way. timeoutMs stops the command when it runs longer.
@@ -21,6 +38,8 @@ export type ExecOptions = {
   env?: Record<string, string | undefined>;
   input?: string;
   timeoutMs?: number;
+  maxBytes?: number;
+  killSignal?: NodeJS.Signals;
 };
 
 export type Io = {
@@ -100,33 +119,96 @@ export function realIo(): Io {
       copyFileSync(src, dst);
       chmodSync(dst, statSync(src).mode & 0o7777);
     },
-    listDirs: (path) => readdirSync(path, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort(),
+    listDirs: (path) =>
+      readdirSync(path, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort(),
     // Every entry name: files, folders and links, even a link that dangles.
     listNames: (path) => (orNull(() => readdirSync(path)) ?? []).sort(),
     listFiles: (path) => walk(path).sort(),
 
     // Resolves on any exit code, and on a timeout. code is null when the
     // command cannot start.
-    execFile(cmd, args, { cwd, env, input, timeoutMs } = {}) {
+    execFile(
+      cmd,
+      args,
+      { cwd, env, input, timeoutMs, maxBytes, killSignal = 'SIGTERM' } = {},
+    ) {
       return new Promise((resolve) => {
-        const child = nodeExecFile(cmd, args, { cwd, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }, (error, stdout, stderr) => {
+        let settled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let bytes = 0;
+        let stopped: 'timeout' | 'output' | undefined;
+        const finish = (result: ExecResult) => {
+          if (settled) return;
+          settled = true;
           clearTimeout(timer);
-          if (error && typeof error.code === 'string') return resolve({ stdout: '', stderr: error.message, code: null });
-          resolve({ stdout, stderr, code: error ? ((error.code as number | undefined) ?? 1) : 0 });
-        });
-        // Stop the command, and stop waiting at once: a child of the command
-        // may keep its output open long after the command itself is gone.
-        const timer = timeoutMs === undefined ? undefined : setTimeout(() => {
-          child.kill();
+          resolve(result);
+        };
+        // Buffer mode preserves byte counts even for invalid UTF-8 diagnostics.
+        // The combined stream limit below runs before Node's per-stream ceiling.
+        const child = nodeExecFile(
+          cmd,
+          args,
+          {
+            cwd,
+            env,
+            encoding: 'buffer',
+            maxBuffer: maxBytes === undefined ? 64 * 1024 * 1024 : Infinity,
+            killSignal,
+          },
+          (error, stdout, stderr) => {
+            if (stopped) return;
+            const signal = error?.signal ?? undefined;
+            if (error && typeof error.code === 'string') {
+              const buffering = error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER';
+              finish({
+                stdout: '',
+                stderr: error.message,
+                code: buffering ? 1 : null,
+                ...(buffering ? { outputLimitExceeded: true } : {}),
+                ...(signal ? { signal } : {}),
+              });
+              return;
+            }
+            try {
+              finish({
+                stdout: stdout.toString('utf8'),
+                stderr: stderr.toString('utf8'),
+                code: error ? ((error.code as number | undefined) ?? 1) : 0,
+                ...(signal ? { signal } : {}),
+              });
+            } catch {
+              finish({ stdout: '', stderr: 'output decoding failed', code: 1,
+                outputLimitExceeded: true, ...(signal ? { signal } : {}) });
+            }
+          },
+        );
+        const stop = (reason: 'timeout' | 'output') => {
+          if (settled || stopped) return;
+          stopped = reason;
+          clearTimeout(timer);
+          const killed = child.kill(killSignal);
           child.stdout?.destroy();
           child.stderr?.destroy();
-          resolve({ stdout: '', stderr: '', code: 1, timedOut: true });
-        }, timeoutMs);
-        // A command may exit without reading its input. Its exit code says
-        // what happened, so a broken pipe here is not an error.
+          finish({
+            stdout: '',
+            stderr: '',
+            code: 1,
+            ...(reason === 'timeout' ? { timedOut: true } : { outputLimitExceeded: true }),
+            ...(killed && killSignal === 'SIGKILL' ? { signal: killSignal } : {}),
+          });
+        };
+        if (maxBytes !== undefined) {
+          const count = (chunk: Buffer) => {
+            bytes += chunk.length;
+            if (bytes > maxBytes) stop('output');
+          };
+          child.stdout?.on('data', count);
+          child.stderr?.on('data', count);
+        }
+        if (timeoutMs !== undefined) timer = setTimeout(() => stop('timeout'), timeoutMs);
         child.stdin!.on('error', () => {});
         child.stdin!.end(input);
       });
