@@ -104,12 +104,16 @@ Example enumeration response:
 {"protocol":1,"ok":true,"result":{"items":[],"complete":true,"nextCursor":null}}
 ```
 
-The executable boundary permits independently shipped adapters in any language,
-using provider login tools without loading their dependencies into lets. An
-in-process plugin would couple runtime versions and credentials to the caller.
-Direct provider commands in skills duplicate policy and parsing. A long-running
-service adds deployment and lifecycle requirements. Process isolation does not
-sandbox an adapter: installing its executable is a repository trust decision.
+[ADR-014](decisions/ADR-014-backlog-adapters-use-an-executable-boundary.md)
+records why backlog adapters use an executable boundary while delegation
+resolvers remain built into `lets`. Independent authors can choose their
+language and release schedule without loading provider dependencies into `lets`.
+This extension goal carries the cost of a versioned protocol, separate
+installation and conformance checks.
+
+Process isolation is not a sandbox. An adapter can access inherited credentials
+and local resources; separating runtime dependencies does not confine that
+access. Installing its executable is a repository trust decision.
 
 ## Operation semantics
 
